@@ -35,8 +35,8 @@
 
 1. 克隆代码到服务器 web 目录
    ```bash
-   git clone https://github.com/yourname/single-page-workshop.git
-   cd single-page-workshop
+   git clone https://github.com/xinghehm/single-page.git
+   cd single-page
 ```
 
 1. 设置目录权限（确保 PHP 有写入权限）
