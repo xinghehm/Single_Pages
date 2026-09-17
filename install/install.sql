@@ -121,7 +121,8 @@ INSERT IGNORE INTO `site_config` (`key`, `value`) VALUES
 ('recommended_sms_platform', 'https://sms.losels.eu.org/'),
 ('yipay_url', ''),
 ('yipay_pid', ''),
-('yipay_key', '');
+('yipay_key', ''),
+('yipay_pay_methods', 'alipay,wxpay,qqpay');
 
 CREATE TABLE IF NOT EXISTS `admin_users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

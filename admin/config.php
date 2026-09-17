@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         updateConfig('yipay_url', $_POST['yipay_url'] ?? '');
         updateConfig('yipay_pid', $_POST['yipay_pid'] ?? '');
         updateConfig('yipay_key', $_POST['yipay_key'] ?? '');
+        updateConfig('yipay_pay_methods', implode(',', $_POST['pay_methods'] ?? []));
         
         // 验证码开关配置
         updateConfig('email_verify_enabled', isset($_POST['email_verify_enabled']) ? '1' : '0');
@@ -277,6 +278,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div>
                     <label class="block text-sm font-medium mb-1">商户密钥 (Key)</label>
                     <input type="text" name="yipay_key" value="<?= htmlspecialchars($config['yipay_key'] ?? '') ?>" placeholder="商户密钥" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">启用支付方式</label>
+                    <?php $enabledMethods = explode(',', $config['yipay_pay_methods'] ?? 'alipay,wxpay,qqpay'); ?>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="pay_methods[]" value="alipay" <?= in_array('alipay', $enabledMethods) ? 'checked' : '' ?> class="w-4 h-4">
+                            <i class="ri-alipay-line text-blue-500"></i> 支付宝
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="pay_methods[]" value="wxpay" <?= in_array('wxpay', $enabledMethods) ? 'checked' : '' ?> class="w-4 h-4">
+                            <i class="ri-wechat-pay-line text-green-500"></i> 微信支付
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="pay_methods[]" value="qqpay" <?= in_array('qqpay', $enabledMethods) ? 'checked' : '' ?> class="w-4 h-4">
+                            <i class="ri-qq-line text-blue-400"></i> QQ钱包
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">取消勾选后，用户端将不显示该支付方式</p>
                 </div>
             </div>
             <h3 class="font-medium mt-6 mb-2 text-lg border-l-4 border-blue-500 pl-3">⚙️ 验证码与安全设置</h3>
