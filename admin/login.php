@@ -1,0 +1,119 @@
+<?php session_start();
+if (isset($_SESSION['admin_id'])) { header('Location: index.php'); exit; }
+require_once '../functions.php';
+$error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ?");
+    $stmt->execute([$username]);
+    $admin = $stmt->fetch();
+    if ($admin && password_verify($password, $admin['password'])) { $_SESSION['admin_id'] = $admin['id']; header('Location: index.php'); exit; }
+    else $error = '用户名或密码错误';
+}
+$config = getConfig();
+?>
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>后台登录 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css"><style>
+/* 移动端顶部导航 - 内联防止CSS丢失 */
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    z-index: 999;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+.mobile-topbar .mobile-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 15px;
+}
+.mobile-topbar .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
+}
+.hamburger-btn {
+    width: 40px; height: 40px;
+    background: rgba(0,0,0,0.05);
+    border: none; border-radius: 10px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+.hamburger-btn span {
+    display: block;
+    width: 20px; height: 2px;
+    background: #333;
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hamburger-btn.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.hamburger-btn.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+@media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+    .sidebar {
+        position: fixed !important;
+        left: -280px !important;
+        top: 0; bottom: 0;
+        z-index: 1000 !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 280px !important;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+        padding-top: 70px !important;
+    }
+    .sidebar.show { left: 0 !important; }
+    main {
+        padding: 16px !important;
+        padding-top: 72px !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+    }
+    body { overflow-x: hidden !important; }
+    .overflow-x-auto {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        width: 100% !important;
+    }
+    .overflow-x-auto table {
+        min-width: 600px !important;
+        width: auto !important;
+    }
+}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4"><div class="glass-card max-w-md w-full p-8"><div class="text-center mb-6"><i class="ri-shield-line text-5xl text-blue-500"></i><h2 class="text-2xl font-bold mt-2">管理后台</h2></div><?php if ($error): ?><div class="error mb-4"><?= $error ?></div><?php endif; ?>
+<form method="post"><input type="text" name="username" placeholder="管理员用户名" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-3"><input type="password" name="password" placeholder="密码" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-4"><button type="submit" class="btn-primary w-full py-3">登录</button></form></div></body></html>

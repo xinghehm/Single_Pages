@@ -1,0 +1,335 @@
+/* style.css - 毛玻璃蓝白风格 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: linear-gradient(135deg, #f0f5ff 0%, #e0e9f7 100%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+}
+
+.glass-card, .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+}
+
+.sidebar {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #1677ff 0%, #0958d9 100%);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(22,119,255,0.3); }
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(22, 119, 255, 0.3);
+    color: #1677ff;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 500;
+    display: inline-block;
+    cursor: pointer;
+}
+.btn-secondary:hover { background: rgba(22, 119, 255, 0.1); }
+
+.error { background: #ffeaea; border-left: 4px solid #b22222; padding: 12px; border-radius: 12px; color: #b22222; }
+.success { background: #e6f9ed; border-left: 4px solid #1e6f3f; padding: 12px; border-radius: 12px; color: #1e6f3f; }
+
+input, textarea, select {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    padding: 10px 18px;
+    outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: #1677ff; background: white; }
+
+@media (prefers-color-scheme: dark) {
+    body { background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%); }
+    .glass-card, .glass, .sidebar { background: rgba(30, 35, 48, 0.85); border-color: rgba(255, 255, 255, 0.1); color: #e6f0ff; }
+    input, textarea, select { background: rgba(30, 35, 48, 0.8); color: white; border-color: rgba(255,255,255,0.2); }
+    .btn-secondary { background: rgba(30, 35, 48, 0.8); color: #1677ff; }
+}
+
+/* 移动端顶部导航栏 */
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    z-index: 999;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+.mobile-topbar .mobile-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a1a1a;
+}
+.mobile-topbar .mobile-logo .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #1677ff, #0958d9);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+/* 汉堡按钮 */
+.hamburger-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.2s;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+.hamburger-btn:hover { background: rgba(0,0,0,0.05); }
+.hamburger-btn:active { background: rgba(0,0,0,0.08); }
+.hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #333;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+.hamburger-btn.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.hamburger-btn.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* 侧边栏遮罩 */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 280px;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+        padding-top: 70px !important;
+    }
+    .sidebar.show { left: 0; }
+    .btn-primary, .btn-secondary { padding: 8px 16px; font-size: 14px; }
+    main { padding: 16px !important; padding-top: 72px !important; }
+    body { overflow-x: hidden; }
+    
+    /* 统计卡片 - 移动端2列 */
+    .grid.grid-cols-1.md\:grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* 表格适配 */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        font-size: 13px;
+        min-width: 500px;
+    }
+    table th, table td {
+        padding: 8px 10px !important;
+        white-space: nowrap;
+    }
+    
+    /* 表单适配 */
+    input[type="text"], input[type="email"], input[type="password"], 
+    input[type="number"], input[type="tel"], select, textarea {
+        font-size: 16px !important; /* 防止iOS缩放 */
+        padding: 10px 12px !important;
+    }
+    
+    /* 标题适配 */
+    h1.text-2xl { font-size: 1.25rem !important; }
+    h2.text-lg { font-size: 1rem !important; }
+    
+    /* 玻璃卡片 */
+    .glass-card {
+        padding: 12px !important;
+    }
+    
+    /* 模态框适配 */
+    .fixed.inset-0 > div.max-w-md {
+        margin: 16px !important;
+        width: calc(100% - 32px) !important;
+        max-width: 100% !important;
+    }
+    
+    /* 图表容器 */
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* 按钮组 */
+    .flex.gap-3 {
+        flex-direction: column;
+    }
+    .flex.gap-3 > * {
+        width: 100%;
+    }
+    
+    /* 下拉框在表格里 */
+    table select {
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        max-width: 100px;
+    }
+}
+
+/* 强制表格横向滚动 - 移动端适配 */
+.overflow-x-auto {
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+.overflow-x-auto table {
+    min-width: 650px !important;
+    width: auto !important;
+    table-layout: auto;
+}
+.overflow-x-auto table th,
+.overflow-x-auto table td {
+    white-space: nowrap !important;
+}
+
+/* 玻璃卡片里的表格也要能滚动 */
+.glass-card .overflow-x-auto {
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+
+
+/* ========== 关键修复：flex布局溢出问题 ========== */
+body.flex, body[class*="flex"] {
+    overflow-x: hidden;
+}
+main.flex-1, main[class*="flex-1"] {
+    min-width: 0 !important;
+    overflow-x: hidden;
+    width: 0;
+    flex: 1 1 0%;
+}
+
+/* 玻璃卡片也要防止溢出 */
+.glass-card {
+    max-width: 100%;
+    overflow: hidden;
+}
+.glass-card .overflow-x-auto {
+    overflow-x: auto !important;
+    margin: 0 -16px;
+    padding: 0 16px;
+}
+
+/* 确保html和body不溢出 */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* 移动端强制适配 */
+@media (max-width: 768px) {
+    /* 确保main正确收缩 */
+    main {
+        min-width: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* 统计卡片移动端2列 */
+    main .grid.grid-cols-1.md\:grid-cols-4,
+    main .grid[class*="grid-cols-1"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* 表格容器强制横向滚动 */
+    main .overflow-x-auto {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    main .overflow-x-auto table {
+        min-width: 600px !important;
+        width: auto !important;
+    }
+    
+    /* 玻璃卡片内边距移动端减小 */
+    main .glass-card {
+        padding: 12px !important;
+    }
+    
+    /* 标题移动端减小 */
+    main h1.text-2xl {
+        font-size: 1.25rem !important;
+    }
+    
+    /* 按钮移动端全宽 */
+    main .flex.gap-3 {
+        flex-direction: column;
+    }
+    main .flex.gap-3 > * {
+        width: 100%;
+    }
+}
