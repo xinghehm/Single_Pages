@@ -1,0 +1,9 @@
+config.php
+install/install.lock
+backup_upgrade/
+*.zip
+*.sql
+*.bak
+.DS_Store
+*.log
+users/uploads/

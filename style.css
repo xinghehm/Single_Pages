@@ -1,0 +1,352 @@
+/* style.css - 全局白底简洁风格 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #ffffff;
+    color: #1f2937;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+a { color: #2563eb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== 卡片 ===== */
+.card, .glass-card, .glass {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* ===== 按钮 ===== */
+.btn-primary {
+    background: #2563eb;
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    transition: background 0.15s;
+    text-decoration: none;
+}
+.btn-primary:hover { background: #1d4ed8; text-decoration: none; color: #fff; }
+
+.btn-secondary {
+    background: #fff;
+    color: #374151;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+.btn-secondary:hover { background: #f9fafb; text-decoration: none; }
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-danger:hover { background: #b91c1c; }
+
+.btn-sm { padding: 4px 12px; font-size: 13px; }
+
+/* ===== 表单 ===== */
+input[type='text'], input[type='email'], input[type='password'],
+input[type='number'], input[type='tel'], input[type='url'],
+select, textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    color: #1f2937;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+label { display: block; font-weight: 500; margin-bottom: 4px; color: #374151; }
+.form-group { margin-bottom: 16px; }
+.form-text { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+/* ===== 表格 ===== */
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600; color: #374151; font-size: 13px; background: #f9fafb; }
+td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; color: #4b5563; }
+tr:hover td { background: #f9fafb; }
+.overflow-x-auto { overflow-x: auto; }
+
+/* ===== 徽章/标签 ===== */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-info { background: #dbeafe; color: #1e40af; }
+.badge-gray { background: #f3f4f6; color: #4b5563; }
+
+/* ===== 提示框 ===== */
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; border: 1px solid; }
+.alert-success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.alert-error, .alert-danger { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.alert-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.alert-info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+/* ===== 侧边栏 ===== */
+.sidebar {
+    width: 240px !important;
+    min-width: 240px !important;
+    flex-shrink: 0 !important;
+    background: #ffffff !important;
+    border-right: 1px solid #e5e7eb !important;
+    padding: 20px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    min-height: 100vh !important;
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+.sidebar nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+}
+.sidebar nav a, .sidebar a {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    border-radius: 6px !important;
+    color: #4b5563 !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.sidebar nav a, .sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.sidebar nav a:hover, .sidebar a:hover { background: #f3f4f6; color: #1f2937; text-decoration: none; }
+.sidebar nav a.active, .sidebar a.active { background: #eff6ff; color: #2563eb; font-weight: 500; }
+.sidebar .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 4px 16px; margin-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+.sidebar .brand .logo {
+    width: 32px; height: 32px; background: #2563eb; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px; flex-shrink: 0;
+}
+.sidebar .brand .name { font-weight: 600; font-size: 15px; color: #1f2937; }
+.sidebar .brand .sub { font-size: 11px; color: #9ca3af; }
+.sidebar .sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+
+/* ===== 移动端顶部栏 ===== */
+.mobile-topbar {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 56px; background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    z-index: 999; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+}
+.mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.mobile-topbar .logo-icon {
+    width: 32px; height: 32px; background: #2563eb; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px;
+}
+.hamburger-btn {
+    width: 40px; height: 40px; background: #f3f4f6;
+    border: none; border-radius: 8px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+}
+.hamburger-btn span { display: block; width: 20px; height: 2px; background: #374151; border-radius: 2px; }
+.sidebar-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 998;
+}
+.sidebar-overlay.show { display: block; }
+
+/* ===== 主内容区布局（完全不依赖Tailwind CDN） ===== */
+.has-sidebar {
+    display: flex !important;
+    min-height: 100vh !important;
+}
+.has-sidebar > .sidebar {
+    flex-shrink: 0;
+}
+.has-sidebar > main,
+.has-sidebar > .main-content {
+    flex: 1 !important;
+    min-width: 0;
+}
+main { flex: 1; padding: 24px; min-width: 0; }
+.flex-1 { flex: 1; min-width: 0; }
+/* sidebar内部第一个包裹div纵向排列 */
+.sidebar > div:first-child {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    width: 100% !important;
+}
+
+/* ===== 分页 ===== */
+.pagination { display: flex; gap: 4px; margin-top: 16px; flex-wrap: wrap; }
+.pagination a, .pagination span {
+    padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 6px;
+    text-decoration: none; color: #374151; font-size: 13px; background: #fff;
+}
+.pagination a:hover { background: #f3f4f6; }
+.pagination .current { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+/* ===== 升级日志 ===== */
+.upgrade-log {
+    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;
+    padding: 12px; font-family: 'Courier New', monospace; font-size: 12px;
+    max-height: 300px; overflow-y: auto; line-height: 1.8;
+}
+.upgrade-log .log-info { color: #374151; }
+.upgrade-log .log-success { color: #16a34a; }
+.upgrade-log .log-error { color: #dc2626; }
+.upgrade-log .log-warning { color: #d97706; }
+
+/* ===== 进度条 ===== */
+.progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+.progress-bar .progress-fill { height: 100%; background: #2563eb; transition: width 0.3s; }
+
+/* ===== 工具类 ===== */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-muted { color: #6b7280; }
+.text-small { font-size: 12px; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.flex-wrap { flex-wrap: wrap; }
+.grid { display: grid; gap: 16px; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.w-full { width: 100%; }
+.hidden { display: none; }
+
+/* ===== 认证页（登录/注册） ===== */
+.auth-wrapper {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: #f9fafb;
+}
+.auth-card {
+    width: 100%; max-width: 400px; background: #fff;
+    border: 1px solid #e5e7eb; border-radius: 10px; padding: 32px;
+}
+.auth-card h2 { font-size: 22px; margin-bottom: 6px; color: #111827; }
+.auth-card .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.auth-card .form-group { margin-bottom: 16px; }
+.auth-card .btn-primary { width: 100%; padding: 10px; margin-top: 8px; }
+.auth-card .auth-footer { text-align: center; margin-top: 20px; font-size: 13px; color: #6b7280; }
+
+/* ===== 移动端响应式 ===== */
+@media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+    .sidebar {
+        position: fixed !important;
+        left: -260px !important;
+        top: 0; bottom: 0;
+        z-index: 1000 !important;
+        transition: left 0.25s ease !important;
+        width: 260px !important;
+        min-width: 260px !important;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.1);
+        padding-top: 70px !important;
+        height: 100vh !important;
+    }
+    .sidebar.show { left: 0 !important; }
+    main { padding: 16px !important; padding-top: 72px !important; }
+    body { overflow-x: hidden; }
+    .grid-cols-2, .grid-cols-3, .grid-cols-4 { grid-template-columns: 1fr !important; }
+    .md\:grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+    table { font-size: 13px; min-width: 500px; }
+    th, td { padding: 8px 10px !important; white-space: nowrap; }
+    input, select, textarea { font-size: 16px !important; }
+    .flex.gap-3 { flex-direction: column; }
+    .flex.gap-3 > * { width: 100%; }
+}
+
+/* ===== 暗黑模式 ===== */
+body.dark {
+    background: #0f1117;
+    color: #e5e7eb;
+}
+body.dark .card, body.dark .glass-card, body.dark .glass, body.dark .sidebar {
+    background: #1a1d27; border-color: #2d3140; color: #e5e7eb;
+}
+body.dark .sidebar nav a, body.dark .sidebar a { color: #9ca3af; }
+body.dark .sidebar nav a:hover, body.dark .sidebar a:hover { background: #2d3140; color: #e5e7eb; }
+body.dark .sidebar nav a.active, body.dark .sidebar a.active { background: rgba(37,99,235,0.2); color: #60a5fa; }
+body.dark .sidebar .brand { border-color: #2d3140; }
+body.dark .sidebar .brand .name { color: #e5e7eb; }
+body.dark .sidebar .sidebar-footer { border-color: #2d3140; }
+body.dark input, body.dark select, body.dark textarea {
+    background: #1a1d27; border-color: #2d3140; color: #e5e7eb;
+}
+body.dark th { background: #1a1d27; border-color: #2d3140; color: #d1d5db; }
+body.dark td { border-color: #2d3140; color: #9ca3af; }
+body.dark tr:hover td { background: #1f2330; }
+body.dark .mobile-topbar { background: #1a1d27; border-color: #2d3140; }
+body.dark .hamburger-btn { background: #2d3140; }
+body.dark .hamburger-btn span { background: #d1d5db; }
+body.dark .auth-wrapper { background: #0f1117; }
+body.dark .auth-card { background: #1a1d27; border-color: #2d3140; }
+body.dark .auth-card h2 { color: #f3f4f6; }
+body.dark .upgrade-log { background: #0f1117; border-color: #2d3140; }
+body.dark .progress-bar { background: #2d3140; }
+body.dark .pagination a, body.dark .pagination span { background: #1a1d27; border-color: #2d3140; color: #d1d5db; }
+body.dark .pagination a:hover { background: #2d3140; }
+body.dark .btn-secondary { background: #1a1d27; border-color: #2d3140; color: #d1d5db; }
+body.dark .btn-secondary:hover { background: #2d3140; }
