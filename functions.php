@@ -1805,14 +1805,28 @@ function upgradeBackupSiteFiles() {
     if (!is_dir(UPGRADE_BACKUP_DIR)) mkdir(UPGRADE_BACKUP_DIR, 0755, true);
     $siteDir = dirname(__DIR__);
     $backupFile = UPGRADE_BACKUP_DIR . '/site_' . date('Ymd_His') . '.zip';
-    $cmd = sprintf(
-        'cd %s && zip -rq %s . -x "*/node_modules/*" -x "*/.git/*" -x "*/vendor/phpmailer/*" 2>&1',
-        escapeshellarg($siteDir), escapeshellarg($backupFile)
-    );
-    exec($cmd, $output, $returnCode);
-    if ($returnCode !== 0 || !file_exists($backupFile)) {
-        return ['success' => false, 'message' => '文件备份失败：' . implode(' ', array_slice($output, 0, 3))];
+    if (file_exists($backupFile)) @unlink($backupFile);
+    try {
+        $phar = new PharData($backupFile);
+        $excludeDirs = ['.git', 'node_modules', 'backup_upgrade', '.well-known'];
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($siteDir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        foreach ($iterator as $file) {
+            if (!$file->isFile()) continue;
+            $relativePath = substr($file->getPathname(), strlen($siteDir) + 1);
+            $skip = false;
+            foreach ($excludeDirs as $ex) {
+                if (strpos($relativePath, $ex . '/') === 0 || $relativePath === $ex) { $skip = true; break; }
+            }
+            if ($skip) continue;
+            $phar->addFile($file->getPathname(), $relativePath);
+        }
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => '文件备份失败：' . $e->getMessage()];
     }
+    if (!file_exists($backupFile)) return ['success' => false, 'message' => '文件备份失败'];
     return ['success' => true, 'file' => $backupFile, 'size' => filesize($backupFile)];
 }
 
@@ -1870,10 +1884,27 @@ function upgradeExtractPackage($zipFile) {
     $extractDir = UPGRADE_TEMP_DIR . '/extracted';
     if (is_dir($extractDir)) upgradeRrmdir($extractDir);
     mkdir($extractDir, 0755, true);
-    $cmd = sprintf('unzip -o -q %s -d %s 2>&1', escapeshellarg($zipFile), escapeshellarg($extractDir));
-    exec($cmd, $output, $returnCode);
-    if ($returnCode !== 0) {
-        return ['success' => false, 'message' => '解压失败：' . implode(' ', array_slice($output, 0, 3))];
+    try {
+        $phar = new PharData($zipFile);
+        $phar->extractTo($extractDir, null, true);
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => '解压失败：' . $e->getMessage()];
+    }
+    // 处理GitHub zip套一层文件夹的情况：如果解压后只有一个子目录，把子目录内容移到根目录
+    $items = scandir($extractDir);
+    $dirs = [];
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') continue;
+        if (is_dir($extractDir . '/' . $item)) $dirs[] = $item;
+    }
+    if (count($dirs) === 1 && count($items) === 3) {
+        $innerDir = $extractDir . '/' . $dirs[0];
+        $innerItems = scandir($innerDir);
+        foreach ($innerItems as $item) {
+            if ($item === '.' || $item === '..') continue;
+            rename($innerDir . '/' . $item, $extractDir . '/' . $item);
+        }
+        @rmdir($innerDir);
     }
     return ['success' => true, 'dir' => $extractDir];
 }
