@@ -1088,8 +1088,9 @@ function getPublicGroups() {
 
 function getUserOrders($userId, $limit = 20) {
     $pdo = getDB();
-    $stmt = $pdo->prepare("SELECT o.*, g.name as group_name FROM orders o LEFT JOIN user_groups g ON o.group_id = g.id WHERE o.user_id = ? ORDER BY o.id DESC LIMIT ?");
-    $stmt->execute([$userId, $limit]);
+    $limit = intval($limit);
+    $stmt = $pdo->prepare("SELECT o.*, g.name as group_name FROM orders o LEFT JOIN user_groups g ON o.group_id = g.id WHERE o.user_id = ? ORDER BY o.id DESC LIMIT $limit");
+    $stmt->execute([$userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -1167,15 +1168,18 @@ function addLoginLog($userId, $username, $status, $failReason = '') {
 function getUserLoginLogs($userId, $limit = 20) {
     $pdo = getDB();
     if ($pdo === null) return [];
-    $stmt = $pdo->prepare("SELECT * FROM login_logs WHERE user_id = ? ORDER BY id DESC LIMIT ?");
-    $stmt->execute([$userId, $limit]);
+    $limit = intval($limit);
+    $stmt = $pdo->prepare("SELECT * FROM login_logs WHERE user_id = ? ORDER BY id DESC LIMIT $limit");
+    $stmt->execute([$userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 function getAllLoginLogs($limit = 50, $offset = 0) {
     $pdo = getDB();
     if ($pdo === null) return [];
-    $stmt = $pdo->prepare("SELECT l.*, u.username as db_username FROM login_logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.id DESC LIMIT ? OFFSET ?");
-    $stmt->execute([$limit, $offset]);
+    $limit = intval($limit);
+    $offset = intval($offset);
+    $stmt = $pdo->prepare("SELECT l.*, u.username as db_username FROM login_logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.id DESC LIMIT $limit OFFSET $offset");
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 function getLoginLogCount() {
@@ -1622,78 +1626,113 @@ function geetest_verify() {
     }
 }
 
-// 输出极验前端 HTML + JS（嵌入表单内）
-function geetest_field() {
+// 输出极验前端隐藏字段+容器（prefix用于区分同一页面多个实例）
+function geetest_field($prefix = '') {
     if (!geetest_enabled()) return '';
-    $html = '<input type="hidden" name="geetest_lot_number" id="geetest_lot_number">';
-    $html .= '<input type="hidden" name="geetest_captcha_output" id="geetest_captcha_output">';
-    $html .= '<input type="hidden" name="geetest_pass_token" id="geetest_pass_token">';
-    $html .= '<input type="hidden" name="geetest_gen_time" id="geetest_gen_time">';
-    $html .= '<input type="hidden" name="geetest_challenge" id="geetest_challenge">';
-    $html .= '<input type="hidden" name="geetest_validate" id="geetest_validate">';
-    $html .= '<input type="hidden" name="geetest_seccode" id="geetest_seccode">';
-    $html .= '<div id="geetest-container" style="margin: 10px 0;"></div>';
+    $s = $prefix ? '_' . $prefix : '';
+    $html = '<input type="hidden" name="geetest_lot_number" id="geetest_lot_number' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_captcha_output" id="geetest_captcha_output' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_pass_token" id="geetest_pass_token' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_gen_time" id="geetest_gen_time' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_challenge" id="geetest_challenge' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_validate" id="geetest_validate' . $s . '">';
+    $html .= '<input type="hidden" name="geetest_seccode" id="geetest_seccode' . $s . '">';
+    $html .= '<div id="geetest-container' . $s . '" class="geetest-wrap" style="margin:0 0 12px;min-height:44px;"></div>';
     return $html;
 }
 
-// 输出极验初始化脚本（放在页面底部，formSelector 指定要拦截的表单）
-function geetest_init_js($formSelector = 'form') {
+// 输出极验初始化脚本（float模式直接显示，支持多表单）
+// $forms: 字符串(旧兼容) 或 数组 [['form'=>'#xxx','prefix'=>''], ...]
+function geetest_init_js($forms = []) {
     if (!geetest_enabled()) return '';
+    if (is_string($forms)) $forms = [['form' => $forms, 'prefix' => '']];
+    if (empty($forms)) $forms = [['form' => 'form', 'prefix' => '']];
     $version = geetest_version();
     $id = $version === 'v4' ? getConfig('geetest_v4_id') : getConfig('geetest_v3_id');
+    if (!$id) return '';
+    $formsJson = json_encode($forms, JSON_UNESCAPED_UNICODE);
     $js = '';
     if ($version === 'v4') {
-        $js .= '<script src="https://static.geetest.com/v4/gt4.js"></script>';
+        $js .= '<script src="assets/gt4.js?v=242"></script>';
         $js .= '<script>
-        var _geetestObj = null, _geetestNeedSubmit = false;
-        if (window.initGeetest4) {
-            initGeetest4({captchaId:"' . $id . '",product:"bind",riskType:"slide"},function(captcha){
-                _geetestObj = captcha;
-                captcha.appendTo("#geetest-container");
-                captcha.onSuccess(function(){
-                    var r = captcha.getValidate();
-                    document.getElementById("geetest_lot_number").value = r.lot_number;
-                    document.getElementById("geetest_captcha_output").value = r.captcha_output;
-                    document.getElementById("geetest_pass_token").value = r.pass_token;
-                    document.getElementById("geetest_gen_time").value = r.gen_time;
-                    if (_geetestNeedSubmit) { _geetestNeedSubmit = false; document.querySelector("' . $formSelector . '").submit(); }
+        (function(){
+            var forms = ' . $formsJson . ';
+            forms.forEach(function(f){
+                var form = document.querySelector(f.form);
+                if (!form) return;
+                var pfx = f.prefix ? "_" + f.prefix : "";
+                var box = document.getElementById("geetest-container" + pfx);
+                if (!box) return;
+                try {
+                initGeetest4({
+                    captchaId: "' . $id . '",
+                    product: "float"
+                }, function(captcha){
+                    captcha.appendTo(box);
+                    captcha.onSuccess(function(){
+                        var r = captcha.getValidate();
+                        if (!r) return;
+                        var set = function(id, v){ var el = document.getElementById(id); if(el) el.value = v || ""; };
+                        set("geetest_lot_number" + pfx, r.lot_number);
+                        set("geetest_captcha_output" + pfx, r.captcha_output);
+                        set("geetest_pass_token" + pfx, r.pass_token);
+                        set("geetest_gen_time" + pfx, r.gen_time);
+                    });
+                    captcha.onError(function(){ box.innerHTML = "<div style=\'color:#ef4444;font-size:13px;padding:8px 0;\'>验证码加载失败，请刷新页面</div>"; });
+                });
+                } catch(err) {
+                    box.innerHTML = "<div style=\'color:#ef4444;font-size:13px;padding:8px 0;\'>验证码初始化失败: " + err.message + "</div>";
+                }
+                form.addEventListener("submit", function(e){
+                    var ln = document.getElementById("geetest_lot_number" + pfx);
+                    if (!ln || !ln.value) {
+                        e.preventDefault();
+                        alert("请先完成验证码验证");
+                    }
                 });
             });
-        }
-        document.querySelector("' . $formSelector . '").addEventListener("submit",function(e){
-            if (!_geetestObj) { e.preventDefault(); alert("验证码加载中，请稍候"); return; }
-            if (document.getElementById("geetest_lot_number").value) return;
-            e.preventDefault();
-            _geetestNeedSubmit = true;
-            _geetestObj.verify();
-        });
+        })();
         </script>';
     } else {
         $js .= '<script src="https://static.geetest.com/static/tools/gt.js"></script>';
         $js .= '<script>
-        var _geetestObj = null, _geetestNeedSubmit = false;
-        fetch("geetest.php?action=register").then(function(r){return r.json();}).then(function(data){
-            if (window.initGeetest) {
-                initGeetest({gt:data.gt,challenge:data.challenge,offline:!data.success,new_captcha:true,product:"bind",width:"100%"},function(captcha){
-                    _geetestObj = captcha;
-                    captcha.appendTo("#geetest-container");
-                    captcha.onSuccess(function(){
-                        var r = captcha.getValidate();
-                        document.getElementById("geetest_challenge").value = r.geetest_challenge;
-                        document.getElementById("geetest_validate").value = r.geetest_validate;
-                        document.getElementById("geetest_seccode").value = r.geetest_seccode;
-                        if (_geetestNeedSubmit) { _geetestNeedSubmit = false; document.querySelector("' . $formSelector . '").submit(); }
+        (function(){
+            var forms = ' . $formsJson . ';
+            forms.forEach(function(f){
+                var form = document.querySelector(f.form);
+                if (!form) return;
+                var pfx = f.prefix ? "_" + f.prefix : "";
+                var box = document.getElementById("geetest-container" + pfx);
+                if (!box) return;
+                fetch("geetest.php?action=register")
+                .then(function(r){return r.json();})
+                .then(function(data){
+                    initGeetest({
+                        gt: data.gt, challenge: data.challenge,
+                        offline: !data.success, new_captcha: true,
+                        product: "float", width: "100%"
+                    }, function(captcha){
+                        captcha.appendTo(box);
+                        captcha.onSuccess(function(){
+                            var r = captcha.getValidate();
+                            if (!r) return;
+                            var set = function(id, v){ var el = document.getElementById(id); if(el) el.value = v || ""; };
+                            set("geetest_challenge" + pfx, r.geetest_challenge);
+                            set("geetest_validate" + pfx, r.geetest_validate);
+                            set("geetest_seccode" + pfx, r.geetest_seccode);
+                        });
                     });
+                })
+                .catch(function(){ box.innerHTML = "<div style=\'color:#ef4444;font-size:13px;padding:8px 0;\'>验证码加载失败，请刷新页面</div>"; });
+                form.addEventListener("submit", function(e){
+                    var ch = document.getElementById("geetest_challenge" + pfx);
+                    if (!ch || !ch.value) {
+                        e.preventDefault();
+                        alert("请先完成验证码验证");
+                    }
                 });
-            }
-        });
-        document.querySelector("' . $formSelector . '").addEventListener("submit",function(e){
-            if (!_geetestObj) { e.preventDefault(); alert("验证码加载中，请稍候"); return; }
-            if (document.getElementById("geetest_challenge").value) return;
-            e.preventDefault();
-            _geetestNeedSubmit = true;
-            _geetestObj.verify();
-        });
+            });
+        })();
         </script>';
     }
     return $js;

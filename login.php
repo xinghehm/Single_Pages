@@ -124,13 +124,14 @@ $config = getConfig();
         <!-- 验证码登录 -->
         <?php if ($smsVerifyEnabled): ?>
         <div id="phonePanel" style="display: none;">
-            <form method="post">
+            <form method="post" id="phoneForm">
                 <input type="hidden" name="login_type" value="phone">
                 <input type="text" name="phone" id="loginPhone" placeholder="手机号" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-3">
                 <div class="flex gap-2 mb-6">
                     <input type="text" name="sms_code" placeholder="短信验证码" required class="flex-1 px-4 py-3 rounded-full bg-white/40 border border-gray-200">
                     <button type="button" id="loginSendSmsBtn" class="btn-secondary whitespace-nowrap px-4">获取验证码</button>
                 </div>
+                <?= geetest_field("phone") ?>
                 <button type="submit" class="btn-primary w-full py-3">登录</button>
             </form>
         </div>
@@ -183,10 +184,22 @@ $config = getConfig();
             alert('请输入有效的手机号');
             return;
         }
+        var gv = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+        if (!gv('geetest_lot_number_phone') && !gv('geetest_challenge_phone')) {
+            alert('请先完成验证码验证');
+            return;
+        }
         fetch('send_sms.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'phone=' + encodeURIComponent(phone) + '&type=login'
+            body: 'phone=' + encodeURIComponent(phone) + '&type=login' +
+            '&geetest_lot_number=' + encodeURIComponent(gv('geetest_lot_number_phone')) +
+            '&geetest_captcha_output=' + encodeURIComponent(gv('geetest_captcha_output_phone')) +
+            '&geetest_pass_token=' + encodeURIComponent(gv('geetest_pass_token_phone')) +
+            '&geetest_gen_time=' + encodeURIComponent(gv('geetest_gen_time_phone')) +
+            '&geetest_challenge=' + encodeURIComponent(gv('geetest_challenge_phone')) +
+            '&geetest_validate=' + encodeURIComponent(gv('geetest_validate_phone')) +
+            '&geetest_seccode=' + encodeURIComponent(gv('geetest_seccode_phone'))
         })
         .then(res => res.json())
         .then(data => {
@@ -211,6 +224,6 @@ $config = getConfig();
     });
     <?php endif; ?>
 </script>
-<?= geetest_init_js('#loginForm') ?>
+<?= geetest_init_js([['form'=>'#loginForm','prefix'=>''],['form'=>'#phoneForm','prefix'=>'phone']]) ?>
 </body>
 </html>
