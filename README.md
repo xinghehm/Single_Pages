@@ -80,14 +80,13 @@ server {
 
 ## 更新日志
 
-### v2.4.2 (2026-09-23)
+### v2.4.3 (2026-09-23)
 
 **修复优化：**
-- 修复在线升级系统在禁用 exec() 环境下的报错
-  - 文件备份改用 PharData 逐文件打包（不依赖系统 zip 命令）
-  - 解压升级包改用 PharData::extractTo（不依赖系统 unzip 命令）
-  - 自动识别 GitHub zip 套一层文件夹的结构并正确解压
-- 自动排除 .git/node_modules/backup_upgrade 目录
+- 修复在线升级文件备份 open_basedir 报错（dirname(__DIR__) 多套一层目录）
+- 修复升级时 copy() Permission denied（站点文件所有者统一为 www）
+- 升级备份改用 PharData 逐文件打包，兼容禁用 exec() 环境
+- 解压升级包改用 PharData::extractTo，自动识别 GitHub zip 套文件夹结构
 
 ### v2.3 (2026-09-17)
 

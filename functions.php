@@ -1803,7 +1803,7 @@ function upgradeCheckUpdate($force = false) {
 
 function upgradeBackupSiteFiles() {
     if (!is_dir(UPGRADE_BACKUP_DIR)) mkdir(UPGRADE_BACKUP_DIR, 0755, true);
-    $siteDir = dirname(__DIR__);
+    $siteDir = __DIR__;
     $backupFile = UPGRADE_BACKUP_DIR . '/site_' . date('Ymd_His') . '.zip';
     if (file_exists($backupFile)) @unlink($backupFile);
     try {
@@ -1910,7 +1910,7 @@ function upgradeExtractPackage($zipFile) {
 }
 
 function upgradeApplyFiles($extractDir) {
-    $siteDir = dirname(__DIR__);
+    $siteDir = __DIR__;
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($extractDir, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::LEAVES_ONLY
