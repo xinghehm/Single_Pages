@@ -20,7 +20,7 @@ foreach ($visitStats as $v) { if ($v['visit_date'] === date('Y-m-d')) $todayVisi
     <title><?= htmlspecialchars($project['name']) ?> - 项目详情</title>
     
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=243">
+    <link rel="stylesheet" href="../style.css?v=245">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <?= outputUserBgStyle() ?>
 <style>
@@ -60,6 +60,7 @@ function toggleSidebar(btn) {
         </div>
         <nav>
             <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
             <a href="projects.php" class="active"><i class="ri-folder-line"></i> 我的项目</a>
             <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
             <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>

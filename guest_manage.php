@@ -23,7 +23,7 @@ if (!$project) {
         <title>项目管理 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊Pages') ?></title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-        <link rel="stylesheet" href="style.css?v=243">
+        <link rel="stylesheet" href="style.css?v=245">
     </head>
     <body class="min-h-screen">
         <nav class="glass-card mx-4 mt-4 px-6 py-3 flex justify-between items-center">
@@ -118,7 +118,7 @@ $message = $_GET['msg'] ?? '';
     <title>管理项目 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊Pages') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=243">
+    <link rel="stylesheet" href="style.css?v=245">
     <style>
         .key-badge {
             background: #1e1e2e;

@@ -69,7 +69,7 @@ $config = getConfig();
     <title>登录 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=243">
+    <link rel="stylesheet" href="style.css?v=245">
     <style>
         body {
             background: #ffffff;

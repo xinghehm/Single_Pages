@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新建文件</title>
     
-    <link rel="stylesheet" href="../style.css?v=243">
+    <link rel="stylesheet" href="../style.css?v=245">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {

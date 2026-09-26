@@ -6,7 +6,7 @@ $config = getConfig();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>登录日志 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=243"><?= outputUserBgStyle() ?>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>登录日志 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><?= outputUserBgStyle() ?>
 <style>
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
 .mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
@@ -39,6 +39,7 @@ $config = getConfig();
         </div>
         <nav>
             <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
             <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
             <a href="login_logs.php" class="active"><i class="ri-history-line"></i> 登录日志</a>
             <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>

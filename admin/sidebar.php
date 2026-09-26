@@ -6,6 +6,7 @@ $menuItems = [
     ['users.php', 'ri-user-line', '用户管理'],
     ['groups.php', 'ri-group-line', '用户组管理'],
     ['projects.php', 'ri-folder-line', '项目管理'],
+    ['templates.php', 'ri-apps-line', '模板管理'],
     ['login_logs.php', 'ri-history-line', '登录日志'],
     ['system.php', 'ri-server-line', '系统信息'],
     ['config.php', 'ri-settings-line', '网站配置'],

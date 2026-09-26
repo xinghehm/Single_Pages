@@ -37,7 +37,7 @@ $backups = listBackups();
 $expiredGuests = getExpiredGuestProjects();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=243">
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245">
 <style>
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
 .mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
@@ -59,30 +59,7 @@ $expiredGuests = getExpiredGuestProjects();
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 <script>function toggleSidebar(btn) { document.querySelector('.sidebar').classList.toggle('show'); document.querySelector('.sidebar-overlay').classList.toggle('show'); }</script>
 
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div>
-                <div class="name"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div>
-                <div class="sub">管理后台</div>
-            </div>
-        </div>
-        <nav>
-            <a href="index.php"><i class="ri-dashboard-line"></i> 仪表盘</a>
-            <a href="users.php"><i class="ri-user-line"></i> 用户管理</a>
-            <a href="groups.php"><i class="ri-group-line"></i> 用户组管理</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 项目管理</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="system.php" class="active"><i class="ri-server-line"></i> 系统信息</a>
-            <a href="config.php"><i class="ri-settings-line"></i> 网站配置</a>
-            <a href="upgrade.php"><i class="ri-refresh-line"></i> 在线升级</a>
-        </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="logout.php"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 
 <main class="flex-1 p-6" style="min-width:0;">
 <h1 class="text-2xl font-bold mb-6">系统信息</h1>

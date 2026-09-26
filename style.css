@@ -58,6 +58,7 @@ main {
     width: 100%;
 }
 
+.page-header > a, .page-header > button { flex-shrink: 0; }
 .page-header {
     margin-bottom: var(--space-6);
     display: flex;
@@ -341,10 +342,11 @@ label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--text-
 
 /* ---------- 表格 ---------- */
 .table-wrap {
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: var(--shadow-sm);
 }
 table { width: 100%; border-collapse: collapse; }
@@ -364,7 +366,12 @@ td {
 }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #fafbfc; }
-.overflow-x-auto { overflow-x: auto; }
+.overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap::after {
+    display: none;
+    pointer-events: none;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
 
 /* ---------- 徽章 ---------- */
 .badge {
@@ -398,6 +405,7 @@ tr:hover td { background: #fafbfc; }
 
 /* ---------- 侧边栏 ---------- */
 .sidebar {
+    overflow-y: auto;
     width: 240px !important;
     min-width: 240px !important;
     flex-shrink: 0 !important;
@@ -767,6 +775,7 @@ tr:hover td { background: #fafbfc; }
 
 /* ---------- 移动端响应式 ---------- */
 @media (max-width: 768px) {
+    .page-header > a, .page-header > button { width: 100%; justify-content: center; }
     .mobile-topbar { display: flex; }
     .sidebar {
         position: fixed !important;

@@ -22,7 +22,7 @@ $config = getConfig();
     <title>编辑 - <?= htmlspecialchars($filename) ?></title>
     
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=243">
+    <link rel="stylesheet" href="../style.css?v=245">
 
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */

@@ -82,7 +82,7 @@ $config = getConfig();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>找回密码 — <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
-    <link rel="stylesheet" href="style.css?v=243">
+    <link rel="stylesheet" href="style.css?v=245">
     <style>
         .tab-btn { padding: 6px 16px; border-radius: 6px; cursor: pointer; background: #f3f4f6; border: 1px solid #d1d5db; font-size: 13px; color: #4b5563; }
         .tab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }

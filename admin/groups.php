@@ -87,7 +87,7 @@ foreach ($groups as $g) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>用户组管理 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=243"><style>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>用户组管理 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
     display: none;
@@ -187,30 +187,7 @@ foreach ($groups as $g) {
 <body class="has-sidebar">
 <div class="mobile-topbar"><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name']) ?></span></div><button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单"><span></span><span></span><span></span></button></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div>
-                <div class="name"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div>
-                <div class="sub">管理后台</div>
-            </div>
-        </div>
-        <nav>
-            <a href="index.php"><i class="ri-dashboard-line"></i> 仪表盘</a>
-            <a href="users.php"><i class="ri-user-line"></i> 用户管理</a>
-            <a href="groups.php" class="active"><i class="ri-group-line"></i> 用户组管理</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 项目管理</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="system.php"><i class="ri-server-line"></i> 系统信息</a>
-            <a href="config.php"><i class="ri-settings-line"></i> 网站配置</a>
-            <a href="upgrade.php"><i class="ri-refresh-line"></i> 在线升级</a>
-        </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="logout.php"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 <main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
     <?php if ($message): ?><div class="success mb-4"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="error mb-4"><?= htmlspecialchars($error) ?></div><?php endif; ?>

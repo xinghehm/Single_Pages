@@ -8,7 +8,7 @@ $config = getConfig();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=243">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=245">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <nav>
             <a href="dashboard.php" class="active"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
             <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
             <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
             <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>

@@ -28,7 +28,7 @@ if ($content === null) die('文件不存在');
     <title>编辑 - <?= htmlspecialchars($filename) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=243">
+    <link rel="stylesheet" href="style.css?v=245">
 </head>
 <body class="p-6">
     <div class="glass-card max-w-5xl mx-auto p-6">

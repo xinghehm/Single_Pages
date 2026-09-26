@@ -52,7 +52,7 @@ $config = getConfig();
     <title>修改密码 - <?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=243">
+    <link rel="stylesheet" href="../style.css?v=245">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
