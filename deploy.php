@@ -10,7 +10,7 @@ $config = getConfig();
     <title>免登录部署 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊Pages') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=241">
+    <link rel="stylesheet" href="style.css?v=243">
     <style>
         .drop-zone {
             border: 2px dashed rgba(22,119,255,0.4);

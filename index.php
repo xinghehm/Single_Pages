@@ -105,7 +105,7 @@ $config = getConfig();
     <title><?= htmlspecialchars($config['site_name'] ?? '单页工坊Pages') ?> - 静态页面托管平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=241">
+    <link rel="stylesheet" href="style.css?v=243">
     <style>
         .feature-card {
             background: #ffffff;

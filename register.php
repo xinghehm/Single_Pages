@@ -61,10 +61,10 @@ $config = getConfig();
     <title>注册 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=241">
+    <link rel="stylesheet" href="style.css?v=243">
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="glass-card max-w-md w-full p-8">
+<body><div class="auth-wrapper">
+    <div class="auth-card">
         <h2 class="text-2xl font-bold mb-6 text-center">注册新账号</h2>
         <?php if ($error): ?>
             <div class="error mb-4"><?= htmlspecialchars($error) ?></div>
@@ -199,5 +199,5 @@ $config = getConfig();
         <?php endif; ?>
     </script>
     <?= geetest_init_js('#registerForm') ?>
-</body>
+</div></body>
 </html>

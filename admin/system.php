@@ -37,7 +37,7 @@ $backups = listBackups();
 $expiredGuests = getExpiredGuestProjects();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=241">
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=243">
 <style>
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
 .mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
@@ -92,7 +92,7 @@ $expiredGuests = getExpiredGuestProjects();
 <?php endif; ?>
 
 <!-- 服务器信息 -->
-<div class="glass-card p-4 mb-4">
+<div class="card mb-4">
     <h3 class="font-medium mb-4"><i class="ri-server-line"></i> 服务器信息</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <div><div class="text-gray-500">操作系统</div><div class="font-medium"><?= htmlspecialchars($sys['os']) ?></div></div>
@@ -115,7 +115,7 @@ $expiredGuests = getExpiredGuestProjects();
 </div>
 
 <!-- PHP扩展 -->
-<div class="glass-card p-4 mb-4">
+<div class="card mb-4">
     <h3 class="font-medium mb-3"><i class="ri-puzzle-line"></i> PHP 扩展检查</h3>
     <div class="flex flex-wrap gap-2">
         <?php foreach ($sys['extensions'] as $ext => $ok): ?>
@@ -125,7 +125,7 @@ $expiredGuests = getExpiredGuestProjects();
 </div>
 
 <!-- 数据库备份 -->
-<div class="glass-card p-4 mb-4">
+<div class="card mb-4">
     <div class="flex justify-between items-center mb-4">
         <h3 class="font-medium"><i class="ri-database-line"></i> 数据库备份</h3>
         <form method="post"><input type="hidden" name="action" value="backup"><button type="submit" class="btn-primary text-sm"><i class="ri-download-line"></i> 立即备份</button></form>
@@ -155,7 +155,7 @@ $expiredGuests = getExpiredGuestProjects();
 </div>
 
 <!-- 访客项目清理 -->
-<div class="glass-card p-4">
+<div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3 class="font-medium"><i class="ri-delete-bin-line"></i> 过期访客项目清理</h3>
         <form method="post" onsubmit="return confirm('确定清理所有过期访客项目？此操作不可恢复')"><input type="hidden" name="action" value="cleanup_guests"><button type="submit" class="btn-secondary text-sm"><i class="ri-broom-line"></i> 清理过期项目</button></form>

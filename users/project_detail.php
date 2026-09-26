@@ -18,9 +18,9 @@ foreach ($visitStats as $v) { if ($v['visit_date'] === date('Y-m-d')) $todayVisi
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($project['name']) ?> - 项目详情</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=241">
+    <link rel="stylesheet" href="../style.css?v=243">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <?= outputUserBgStyle() ?>
 <style>
@@ -52,21 +52,23 @@ function toggleSidebar(btn) {
 }
 </script>
 
-<aside class="sidebar w-64 min-h-screen p-5 flex flex-col justify-between">
+<aside class="sidebar">
     <div>
-        <div class="flex items-center gap-2 mb-8">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white"><i class="ri-cloud-line"></i></div>
-            <div><div class="font-bold"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div><div class="text-xs text-gray-500">Pages</div></div>
+        <div class="brand">
+            <div class="logo"><i class="ri-cloud-line"></i></div>
+            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
         </div>
-        <nav class="space-y-2">
-            <a href="dashboard.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="projects.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-user-line"></i> 个人中心</a>
-        </nav>
+        <nav>
+            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="projects.php" class="active"><i class="ri-folder-line"></i> 我的项目</a>
+            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
+            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
+            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
+            </nav>
     </div>
-    <div><a href="../logout.php" class="text-red-500"><i class="ri-logout-box-line"></i> 退出</a></div>
+    <div class="sidebar-footer">
+        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
+    </div>
 </aside>
 
 <main class="flex-1 p-6">
@@ -83,7 +85,7 @@ function toggleSidebar(btn) {
     </div>
 
     <!-- 访问统计 -->
-    <div class="glass-card p-4 mb-4">
+    <div class="card mb-4">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div class="flex items-center gap-2 text-gray-600"><i class="ri-bar-chart-line"></i> 访问统计（近14天）</div>
             <div class="flex gap-4 text-sm">
@@ -94,7 +96,7 @@ function toggleSidebar(btn) {
         <div style="height: 200px;"><canvas id="visitChart"></canvas></div>
     </div>
 
-    <div class="glass-card p-4">
+    <div class="card">
         <div class="flex items-center gap-2 text-gray-600 mb-4"><i class="ri-file-list-line"></i> 文件列表</div>
         <?php if (empty($files)): ?>
             <div class="text-center py-12"><i class="ri-file-line text-6xl text-gray-300 mb-4"></i><p>暂无文件，点击新建文件</p></div>

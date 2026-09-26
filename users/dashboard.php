@@ -8,7 +8,7 @@ $config = getConfig();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=241">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=243">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
@@ -136,26 +136,48 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <aside class="sidebar">
-    <div><div class="flex items-center gap-2 mb-8"><div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white"><i class="ri-cloud-line"></i></div><div><div class="font-bold"><?= htmlspecialchars($config['site_name']) ?></div><div class="text-xs text-gray-500">Pages</div></div></div>
-    <nav><a href="dashboard.php" class="active"><i class="ri-dashboard-line"></i> 控制台</a><a href="projects.php" class=""><i class="ri-folder-line"></i> 我的项目</a><a href="buy_group.php" class=""><i class="ri-vip-crown-line"></i> 购买用户组</a><a href="profile.php" class=""><i class="ri-user-line"></i> 个人中心</a></nav></div>
-    <div><a href="../logout.php" class="text-red-500"><i class="ri-logout-box-line"></i> 退出</a></div>
+    <div>
+        <div class="brand">
+            <div class="logo"><i class="ri-cloud-line"></i></div>
+            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
+        </div>
+        <nav>
+            <a href="dashboard.php" class="active"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
+            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
+            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
+            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
+            </nav>
+    </div>
+    <div class="sidebar-footer">
+        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
+    </div>
 </aside>
 <main class="flex-1 p-6">
-    <div class="flex justify-between items-center mb-6 flex-wrap gap-3"><div class="glass-card p-4 flex-1"><h1 class="text-xl font-bold">欢迎回来，<?= htmlspecialchars($user['username']) ?></h1>
-    <p class="text-sm text-gray-500 mt-1 mb-4">
-        当前用户组：<span class="font-medium text-blue-600"><?= htmlspecialchars($currentGroup['name'] ?? '免费用户') ?></span>
-        <?php if (!empty($user['group_expire_at'])): ?>
-        （到期：<?= date('Y-m-d', $user['group_expire_at']) ?>）
-        <?php endif; ?>
-        <a href="buy_group.php" class="text-blue-500 hover:underline ml-2">升级</a>
-    </p><p class="text-gray-500 text-sm"><?= htmlspecialchars($config['tagline']) ?></p></div><?php if (canCreateProject($user['id'])): ?>
-<button onclick="newProject()" class="btn-primary"><i class="ri-add-line"></i> 新建项目</button>
-<?php else: ?>
-<button onclick="alert('项目数量已达上限（<?= getUserProjectLimit($user['id']) ?>个），请升级用户组或删除旧项目')" class="btn-secondary"><i class="ri-lock-line"></i> 已达上限</button>
-<?php endif; ?></div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"><div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm">我的项目</div><div class="text-2xl font-bold"><?= $stats['project_count'] ?>/<?= getUserProjectLimit($user['id']) ?></div></div><div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm">已用空间</div><div class="text-2xl font-bold"><?= $stats['total_size_mb'] ?> MB</div></div><div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm">总配额</div><div class="text-2xl font-bold text-orange-500">500 MB</div></div><div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm">使用率</div><div class="text-2xl font-bold"><?= round(($stats['total_size_mb'] / 500) * 100, 1) ?>%</div></div></div>
-    <div class="glass-card p-4 mb-6"><h3 class="font-medium mb-4">空间使用趋势（近7日）</h3><canvas id="usageChart" height="120"></canvas></div>
-    <div class="glass-card p-4"><div class="flex justify-between items-center mb-4"><h3 class="font-medium">最近项目</h3><a href="projects.php" class="text-blue-600 text-sm">查看全部</a></div><?php if (empty($projects)): ?><div class="text-center py-8 text-gray-500">暂无项目，点击右上角创建</div><?php else: ?><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><?php foreach (array_slice($projects, 0, 3) as $pro): ?><div class="bg-white dark:bg-gray-800/50 rounded-xl p-4"><div class="font-bold"><?= htmlspecialchars($pro['name']) ?></div><div class="flex justify-between items-center mt-3"><span class="text-xs text-green-600 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-lg"></span> 在线</span><a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="text-blue-600 text-sm">管理文件</a></div></div><?php endforeach; ?></div><?php endif; ?></div>
+    <div class="page-header">
+    <div class="card" style="flex:1;">
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-1);margin-bottom:8px;">欢迎回来，<?= htmlspecialchars($user['username']) ?></h1>
+        <p style="color:var(--text-3);font-size:14px;margin-bottom:4px;">
+            当前用户组：<span style="color:var(--primary);font-weight:500;"><?= htmlspecialchars($currentGroup['name'] ?? '免费用户') ?></span>
+            <?php if (!empty($user['group_expire_at'])): ?>（到期：<?= date('Y-m-d', $user['group_expire_at']) ?>）<?php endif; ?>
+            <a href="buy_group.php" style="margin-left:8px;">升级</a>
+        </p>
+        <p style="color:var(--text-4);font-size:13px;"><?= htmlspecialchars($config['tagline']) ?></p>
+    </div>
+    <?php if (canCreateProject($user['id'])): ?>
+    <button onclick="newProject()" class="btn-primary" style="align-self:flex-start;"><i class="ri-add-line"></i> 新建项目</button>
+    <?php else: ?>
+    <button onclick="alert('项目数量已达上限（<?= getUserProjectLimit($user['id']) ?>个），请升级用户组或删除旧项目')" class="btn-secondary" style="align-self:flex-start;"><i class="ri-lock-line"></i> 已达上限</button>
+    <?php endif; ?>
+</div>
+    <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="ri-folder-line"></i></div><div class="stat-value"><?= $stats['project_count'] ?>/<?= getUserProjectLimit($user['id']) ?></div><div class="stat-label">我的项目</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="ri-hard-drive-2-line"></i></div><div class="stat-value"><?= $stats['total_size_mb'] ?> MB</div><div class="stat-label">已用空间</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="ri-database-line"></i></div><div class="stat-value">500 MB</div><div class="stat-label">总配额</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fce7f3;color:#db2777;"><i class="ri-pie-chart-line"></i></div><div class="stat-value"><?= round(($stats['total_size_mb'] / 500) * 100, 1) ?>%</div><div class="stat-label">使用率</div></div>
+</div>
+    <div class="card mb-6"><h3 class="font-medium mb-4">空间使用趋势（近7日）</h3><canvas id="usageChart" height="120"></canvas></div>
+    <div class="card"><div class="flex justify-between items-center mb-4"><h3 class="font-medium">最近项目</h3><a href="projects.php" class="text-blue-600 text-sm">查看全部</a></div><?php if (empty($projects)): ?><div class="text-center py-8 text-gray-500">暂无项目，点击右上角创建</div><?php else: ?><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><?php foreach (array_slice($projects, 0, 3) as $pro): ?><div class="card" style="padding:16px;"><div class="font-bold"><?= htmlspecialchars($pro['name']) ?></div><div class="flex justify-between items-center mt-3"><span class="text-xs text-green-600 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-lg"></span> 在线</span><a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="text-blue-600 text-sm">管理文件</a></div></div><?php endforeach; ?></div><?php endif; ?></div>
 </main>
 <script>
     new Chart(document.getElementById('usageChart'), { type: 'line', data: { labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'], datasets: [{ label: '空间使用 (MB)', data: [20, 25, 22, 32, 28, 35, 30], borderColor: '#2563eb', backgroundColor: 'rgba(22,119,255,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });

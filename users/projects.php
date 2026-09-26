@@ -14,96 +14,178 @@ if (isset($_GET['clone']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 }
+
+// 生成项目封面渐变色（基于项目名hash）
+function projectCoverGradient($name) {
+    $gradients = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+        'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    ];
+    $hash = crc32($name);
+    return $gradients[$hash % count($gradients)];
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>我的项目 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=241"><?= outputUserBgStyle() ?>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的项目 - <?= htmlspecialchars($config['site_name']) ?></title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=243">
+<?= outputUserBgStyle() ?>
 <style>
-.mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
-.mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
-.mobile-topbar .logo-icon { width: 32px; height: 32px; background: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
-.hamburger-btn { width: 40px; height: 40px; background: #f3f4f6; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
-.hamburger-btn span { display: block; width: 20px; height: 2px; background: #333; border-radius: 2px; }
-.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 998; }
-.sidebar-overlay.show { display: block; }
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
-.modal-overlay.show { display: flex; }
-.modal-box { background: #fff; border-radius: 8px; padding: 32px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; }
-.template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
-.template-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; text-align: center; }
-.template-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
-.template-card.selected { border-color: #3b82f6; background: #eff6ff; }
-.template-card .tpl-icon { font-size: 32px; color: #3b82f6; margin-bottom: 8px; }
-.template-card .tpl-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-.template-card .tpl-desc { font-size: 11px; color: #999; }
-@media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    .sidebar { position: fixed !important; left: -280px !important; top: 0; bottom: 0; z-index: 1000 !important; transition: left 0.3s !important; width: 280px !important; padding-top: 70px !important; }
-    .sidebar.show { left: 0 !important; }
-    main { padding: 16px !important; padding-top: 72px !important; }
+.template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
+.template-card { border: 2px solid var(--border); border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: var(--transition); text-align: center; }
+.template-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.template-card.selected { border-color: var(--primary); background: var(--primary-light); }
+.template-card .tpl-icon { font-size: 28px; color: var(--primary); margin-bottom: 8px; }
+.template-card .tpl-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-1); }
+.template-card .tpl-desc { font-size: 11px; color: var(--text-4); }
+
+.delete-confirm-btn {
+    position: relative;
+    overflow: hidden;
+    background: #dc2626;
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
+.delete-confirm-btn .dcp-progress {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+.delete-confirm-btn.pressing {
+    transform: scale(0.96);
+}
+.delete-confirm-btn.pressing .dcp-progress {
+    width: 100%;
+    transition: width 1s linear;
+}
+.delete-confirm-btn .dcp-text { position: relative; z-index: 1; }
 </style>
 </head>
 <body class="has-sidebar">
+
+<!-- 移动端顶部栏 -->
 <div class="mobile-topbar">
     <div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)"><span></span><span></span><span></span></button>
+    <button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
 </div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>
-function toggleSidebar(btn) {
-    document.querySelector('.sidebar').classList.toggle('show');
-    document.querySelector('.sidebar-overlay').classList.toggle('show');
-}
-</script>
 
-<aside class="sidebar w-64 min-h-screen p-5 flex flex-col justify-between">
-    <div><div class="flex items-center gap-2 mb-8"><div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white"><i class="ri-cloud-line"></i></div><div><div class="font-bold"><?= htmlspecialchars($config['site_name']) ?></div><div class="text-xs text-gray-500">Pages</div></div></div>
-    <nav class="space-y-2"><a href="dashboard.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-dashboard-line"></i> 控制台</a><a href="projects.php" class="flex items-center gap-3 p-3 rounded-lg bg-blue-50 text-blue-600"><i class="ri-folder-line"></i> 我的项目</a><a href="login_logs.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-history-line"></i> 登录日志</a><a href="buy_group.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-vip-crown-line"></i> 购买用户组</a><a href="profile.php" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 text-gray-600"><i class="ri-user-line"></i> 个人中心</a></nav></div>
-    <div><a href="../logout.php" class="text-red-500"><i class="ri-logout-box-line"></i> 退出</a></div>
+<!-- 侧边栏 -->
+<aside class="sidebar">
+    <div>
+        <div class="brand">
+            <div class="logo"><i class="ri-cloud-line"></i></div>
+            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
+        </div>
+        <nav>
+            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="projects.php" class="active"><i class="ri-folder-line"></i> 我的项目</a>
+            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
+            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
+            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
+        </nav>
+    </div>
+    <div class="sidebar-footer">
+        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
+    </div>
 </aside>
 
-<main class="flex-1 p-6">
-<div class="flex justify-between items-center mb-6 flex-wrap gap-3">
-    <div><h1 class="text-2xl font-bold">我的项目</h1><p class="text-gray-500">共 <?= count($projects) ?> 个项目</p></div>
-    <button onclick="openNewModal()" class="btn-primary"><i class="ri-add-line"></i> 新建项目</button>
-</div>
-
-<div class="glass-card p-4">
-<?php if (empty($projects)): ?>
-<div class="text-center py-12"><i class="ri-folder-line text-6xl text-gray-300 mb-4"></i><p>暂无项目，点击右上角创建</p></div>
-<?php else: ?>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-<?php foreach ($projects as $pro): $totalVisits = getProjectTotalVisits($pro['pro_id']); ?>
-<div class="bg-white/60 rounded-xl p-4 hover:shadow-lg transition">
-    <div class="font-bold text-lg"><?= htmlspecialchars($pro['name']) ?></div>
-    <div class="text-gray-500 text-xs mb-2"><?= date('Y-m-d', $pro['created_at']) ?></div>
-    <div class="text-xs text-gray-400 mb-3"><i class="ri-eye-line"></i> 访问 <?= $totalVisits ?> 次</div>
-    <div class="flex justify-between items-center">
-        <span class="text-xs text-green-600 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full"></span> 在线</span>
-        <div class="space-x-2">
-            <a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="text-blue-600 text-sm">管理</a>
-            <a href="projects.php?clone=<?= $pro['pro_id'] ?>" onclick="return confirm('克隆此项目？')" class="text-purple-600 text-sm">克隆</a>
-            <a href="project_delete.php?pro=<?= $pro['pro_id'] ?>" onclick="return confirm('删除项目不可恢复')" class="text-red-500 text-sm">删除</a>
+<main>
+    <!-- 页头 -->
+    <div class="page-header">
+        <div>
+            <h1>我的项目</h1>
+            <p class="subtitle">共 <?= count($projects) ?> 个项目</p>
         </div>
+        <button onclick="openNewModal()" class="btn-primary"><i class="ri-add-line"></i> 新建项目</button>
     </div>
-</div>
-<?php endforeach; ?>
-</div>
-<?php endif; ?>
-</div>
+
+    <!-- 骨架屏（加载时显示） -->
+    <div id="skeletonArea" class="masonry" style="display:none;">
+        <?php for ($i = 0; $i < 8; $i++): ?>
+        <div class="masonry-item">
+            <div class="project-card">
+                <div class="skeleton skeleton-cover"></div>
+                <div class="body">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text" style="width:40%;"></div>
+                    <div class="skeleton skeleton-text" style="width:60%;margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+        <?php endfor; ?>
+    </div>
+
+    <!-- 实际内容 -->
+    <div id="contentArea">
+    <?php if (empty($projects)): ?>
+        <!-- 空状态 -->
+        <div class="empty-state">
+            <div class="icon-wrap"><i class="ri-folder-open-line"></i></div>
+            <h3>还没有项目</h3>
+            <p>创建你的第一个项目，开始搭建静态页面</p>
+            <button onclick="openNewModal()" class="btn-primary"><i class="ri-add-line"></i> 新建项目</button>
+        </div>
+    <?php else: ?>
+        <!-- 瀑布流 -->
+        <div class="masonry">
+        <?php foreach ($projects as $pro): $totalVisits = getProjectTotalVisits($pro['pro_id']); ?>
+            <div class="masonry-item">
+                <div class="project-card">
+                    <div class="cover" style="background:<?= projectCoverGradient($pro['name']) ?>;">
+                        <span style="font-size:28px;font-weight:700;position:relative;z-index:1;"><?= mb_substr($pro['name'], 0, 1) ?></span>
+                    </div>
+                    <div class="body">
+                        <div class="title" title="<?= htmlspecialchars($pro['name']) ?>"><?= htmlspecialchars($pro['name']) ?></div>
+                        <div class="meta">
+                            <span><i class="ri-calendar-line"></i> <?= date('Y-m-d', $pro['created_at']) ?></span>
+                            <span><i class="ri-eye-line"></i> <?= $totalVisits ?></span>
+                        </div>
+                        <div class="actions">
+                            <a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="act-manage"><i class="ri-settings-3-line"></i> 管理</a>
+                            <a href="projects.php?clone=<?= $pro['pro_id'] ?>" onclick="return confirm('克隆此项目？')" class="act-clone"><i class="ri-file-copy-line"></i> 克隆</a>
+                            <button class="act-delete" onclick="openDeleteModal('<?= $pro['pro_id'] ?>', '<?= htmlspecialchars($pro['name'], ENT_QUOTES) ?>')"><i class="ri-delete-bin-line"></i> 删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    </div>
 </main>
 
 <!-- 新建项目模态框 -->
 <div class="modal-overlay" id="newModal">
-    <div class="modal-box">
-        <h2 class="text-xl font-bold mb-4">新建项目</h2>
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">项目名称</label>
-            <input type="text" id="projectName" placeholder="输入项目名称" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+    <div class="modal">
+        <h3>新建项目</h3>
+        <div class="form-group">
+            <label>项目名称</label>
+            <input type="text" id="projectName" placeholder="输入项目名称">
         </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">选择模板</label>
+        <div class="form-group">
+            <label>选择模板</label>
             <div class="template-grid" id="templateGrid">
                 <div class="template-card selected" data-id="0">
                     <div class="tpl-icon"><i class="ri-file-code-line"></i></div>
@@ -126,7 +208,44 @@ function toggleSidebar(btn) {
     </div>
 </div>
 
+<!-- 删除确认弹窗 -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;text-align:center;">
+        <div style="width:64px;height:64px;margin:0 auto 16px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#dc2626;">
+            <i class="ri-error-warning-line"></i>
+        </div>
+        <h3 style="margin-bottom:8px;">确认删除项目</h3>
+        <p style="color:var(--text-3);margin-bottom:24px;">项目 <strong id="deleteProName" style="color:var(--text-1);"></strong> 将被永久删除，不可恢复</p>
+        <div class="flex gap-3" style="justify-content:center;">
+            <button onclick="closeDeleteModal()" class="btn-secondary">取消</button>
+            <button id="deleteConfirmBtn" class="delete-confirm-btn">
+                <div class="dcp-progress"></div>
+                <span class="dcp-text">按住确认删除</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+// 骨架屏：页面加载时短暂显示
+(function() {
+    var skeleton = document.getElementById('skeletonArea');
+    var content = document.getElementById('contentArea');
+    if (skeleton && content) {
+        content.style.display = 'none';
+        skeleton.style.display = 'block';
+        setTimeout(function() {
+            skeleton.style.display = 'none';
+            content.style.display = 'block';
+        }, 600);
+    }
+})();
+
 let selectedTemplate = 0;
 function openNewModal() { document.getElementById('newModal').classList.add('show'); document.getElementById('projectName').value = ''; selectedTemplate = 0; updateTemplateSelection(); }
 function closeNewModal() { document.getElementById('newModal').classList.remove('show'); }
@@ -144,12 +263,54 @@ function updateTemplateSelection() {
 function createProject() {
     const name = document.getElementById('projectName').value.trim();
     if (!name) { alert('请输入项目名称'); return; }
-    if (!/^[a-zA-Z0-9\x{4e00}-\x{9fa5}_\-]+$/u.test(name)) { alert('项目名只能包含中英文、数字、下划线、短横线'); return; }
+    if (!/^[a-zA-Z0-9\u4e00-\u9fa5_\-]+$/.test(name)) { alert('项目名只能包含中英文、数字、下划线、短横线'); return; }
     let url = 'project_new.php?name=' + encodeURIComponent(name);
     if (selectedTemplate > 0) url += '&template=' + selectedTemplate;
     location.href = url;
 }
 document.getElementById('newModal').addEventListener('click', function(e) { if (e.target === this) closeNewModal(); });
+
+// 删除确认弹窗
+var deleteProId = null;
+function openDeleteModal(proId, proName) {
+    deleteProId = proId;
+    document.getElementById('deleteProName').textContent = proName;
+    document.getElementById('deleteModal').classList.add('show');
+    resetDeleteBtn();
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+    resetDeleteBtn();
+}
+function resetDeleteBtn() {
+    var btn = document.getElementById('deleteConfirmBtn');
+    btn.classList.remove('pressing');
+    btn.querySelector('.dcp-text').textContent = '按住确认删除';
+}
+// 长按确认删除
+(function() {
+    var btn = document.getElementById('deleteConfirmBtn');
+    var timer = null;
+    function startPress(e) {
+        e.preventDefault();
+        btn.classList.add('pressing');
+        btn.querySelector('.dcp-text').textContent = '正在删除...';
+        timer = setTimeout(function() {
+            location.href = 'project_delete.php?pro=' + deleteProId;
+        }, 1000);
+    }
+    function cancelPress() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        resetDeleteBtn();
+    }
+    btn.addEventListener('mousedown', startPress);
+    btn.addEventListener('touchstart', startPress, {passive: false});
+    btn.addEventListener('mouseup', cancelPress);
+    btn.addEventListener('mouseleave', cancelPress);
+    btn.addEventListener('touchend', cancelPress);
+    btn.addEventListener('touchcancel', cancelPress);
+})();
+document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
 </script>
 </body>
 </html>

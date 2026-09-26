@@ -120,8 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新建文件</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css?v=241">
+    
+    <link rel="stylesheet" href="../style.css?v=243">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {

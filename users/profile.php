@@ -131,9 +131,9 @@ $config = getConfig();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人中心 - <?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=241">
+    <link rel="stylesheet" href="../style.css?v=243">
     <style>
         .info-row { margin-bottom: 12px; }
         .info-label { font-weight: 600; width: 90px; display: inline-block; color: #4a5568; }
@@ -285,17 +285,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <aside class="sidebar">
     <div>
-        <div class="flex items-center gap-2 mb-8">
-            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white"><i class="ri-cloud-line"></i></div>
-            <div><div class="font-bold"><?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></div><div class="text-xs text-gray-500">Pages</div></div>
+        <div class="brand">
+            <div class="logo"><i class="ri-cloud-line"></i></div>
+            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
         </div>
         <nav>
-            <a href="dashboard.php" class=""><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="projects.php" class=""><i class="ri-folder-line"></i> 我的项目</a><a href="buy_group.php" class=""><i class="ri-vip-crown-line"></i> 购买用户组</a>
+            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
+            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
+            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
+            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
             <a href="profile.php" class="active"><i class="ri-user-line"></i> 个人中心</a>
-        </nav>
+            </nav>
     </div>
-    <div><a href="../logout.php" class="text-red-500"><i class="ri-logout-box-line"></i> 退出</a></div>
+    <div class="sidebar-footer">
+        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
+    </div>
 </aside>
 
 <main class="flex-1 p-6">

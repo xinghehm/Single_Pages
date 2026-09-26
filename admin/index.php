@@ -23,7 +23,7 @@ for ($i = 6; $i >= 0; $i--) {
 $config = getConfig();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>后台仪表盘 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=241"><style>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>后台仪表盘 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=243"><style>
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
 .mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
 .mobile-topbar .logo-icon { width: 32px; height: 32px; background: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
@@ -73,28 +73,28 @@ $config = getConfig();
 </aside>
 
 <main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
-<h1 class="text-2xl font-bold mb-6">👋 你好，管理员</h1>
+<div class="page-header"><div><h1>👋 你好，管理员</h1><p class="subtitle">平台运营数据概览</p></div></div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm"><i class="ri-user-line"></i> 用户总数</div><div class="text-3xl font-bold text-blue-600"><?= $userCount ?></div></div>
-    <div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm"><i class="ri-folder-line"></i> 项目总数</div><div class="text-3xl font-bold text-green-600"><?= $projectCount + $guestCount ?></div><div class="text-xs text-gray-400">用户 <?= $projectCount ?> / 访客 <?= $guestCount ?></div></div>
-    <div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm"><i class="ri-eye-line"></i> 总访问量</div><div class="text-3xl font-bold text-purple-600"><?= $totalVisits ?></div></div>
-    <div class="glass-card p-4 text-center"><div class="text-gray-500 text-sm"><i class="ri-money-cny-circle-line"></i> 订单/收入</div><div class="text-3xl font-bold text-orange-500"><?= $orderCount ?></div><div class="text-xs text-gray-400">已付 ¥<?= number_format($totalRevenue, 2) ?></div></div>
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="ri-user-line"></i></div><div class="stat-value"><?= $userCount ?></div><div class="stat-label">用户总数</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="ri-folder-line"></i></div><div class="stat-value"><?= $projectCount + $guestCount ?></div><div class="stat-label">项目总数 <span style="font-size:12px;color:var(--text-4);">用户<?= $projectCount ?>/访客<?= $guestCount ?></span></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#f3e8ff;color:#9333ea;"><i class="ri-eye-line"></i></div><div class="stat-value"><?= $totalVisits ?></div><div class="stat-label">总访问量</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="ri-money-cny-circle-line"></i></div><div class="stat-value"><?= $orderCount ?></div><div class="stat-label">订单/收入 <span style="font-size:12px;color:var(--text-4);">已付¥<?= number_format($totalRevenue, 2) ?></span></div></div>
 </div>
 
-<div class="glass-card p-4 mb-4"><h3 class="font-medium mb-4">平台趋势（近7日）</h3><canvas id="trendChart" height="100"></canvas></div>
+<div class="card mb-6"><h3 class="font-medium mb-4">平台趋势（近7日）</h3><canvas id="trendChart" height="100"></canvas></div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="glass-card p-4">
+    <div class="card">
         <h3 class="font-medium mb-3"><i class="ri-file-list-line"></i> 快捷操作</h3>
         <div class="space-y-2">
-            <a href="users.php" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition"><span><i class="ri-user-add-line"></i> 管理用户</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
-            <a href="projects.php" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition"><span><i class="ri-folder-line"></i> 管理项目</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
-            <a href="system.php" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition"><span><i class="ri-database-line"></i> 数据库备份</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
-            <a href="config.php" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition"><span><i class="ri-settings-line"></i> 网站配置</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
+            <a href="users.php" class="flex items-center justify-between p-3 rounded-lg transition" style="background:var(--border-light);"><span><i class="ri-user-add-line"></i> 管理用户</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
+            <a href="projects.php" class="flex items-center justify-between p-3 rounded-lg transition" style="background:var(--border-light);"><span><i class="ri-folder-line"></i> 管理项目</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
+            <a href="system.php" class="flex items-center justify-between p-3 rounded-lg transition" style="background:var(--border-light);"><span><i class="ri-database-line"></i> 数据库备份</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
+            <a href="config.php" class="flex items-center justify-between p-3 rounded-lg transition" style="background:var(--border-light);"><span><i class="ri-settings-line"></i> 网站配置</span><i class="ri-arrow-right-s-line text-gray-400"></i></a>
         </div>
     </div>
-    <div class="glass-card p-4">
+    <div class="card">
         <h3 class="font-medium mb-3"><i class="ri-information-line"></i> 系统概览</h3>
         <?php $sys = getSystemInfo(); ?>
         <div class="space-y-2 text-sm">

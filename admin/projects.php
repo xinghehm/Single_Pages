@@ -57,7 +57,7 @@ foreach ($projects as &$p) {
 $guestProjects = $pdo->query("SELECT * FROM guest_projects ORDER BY id DESC")->fetchAll();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>项目管理 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=241"><style>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>项目管理 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=243"><style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
     display: none;
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </aside>
 <main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
-<div class="glass-card p-4" style="overflow: hidden;">
+<div class="card" style="overflow: hidden;">
     <h1 class="text-lg font-bold mb-4">项目管理</h1>
     
     <!-- Tab切换 -->

@@ -49,7 +49,7 @@ if (is_dir(UPGRADE_BACKUP_DIR)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在线升级 — 管理后台</title>
-    <link rel="stylesheet" href="../style.css?v=241">
+    <link rel="stylesheet" href="../style.css?v=243">
 </head>
 <body class="has-sidebar">
 <aside class="sidebar">

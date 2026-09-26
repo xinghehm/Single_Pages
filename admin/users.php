@@ -118,9 +118,9 @@ $config = getConfig();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理 - <?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css?v=241">
+    <link rel="stylesheet" href="../style.css?v=243">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </aside>
 <main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
-    <div class="glass-card p-4" style="overflow: hidden;">
+    <div class="card" style="overflow: hidden;">
         <h1 class="text-lg font-bold mb-4">用户管理</h1>
         
         <?php if ($error): ?>
