@@ -69,16 +69,14 @@ $config = getConfig();
     <title>登录 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=245">
+    <link rel="stylesheet" href="style.css?v=241">
     <style>
         body {
             background: #ffffff;
             min-height: 100vh;
             display: flex;
             position: relative;
-            overflow: hidden;
-        }
-        }
+            overflow-x: hidden;
         }
         .left-side { flex: 1; padding: 60px 80px; display: flex; flex-direction: column; justify-content: center; color: #111827; }
         .right-side { width: 480px; display: flex; align-items: center; padding: 40px; position: relative; z-index: 1; }
@@ -95,8 +93,8 @@ $config = getConfig();
         .login-card input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important; }
         .dark-toggle { position: fixed; top: 20px; right: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         @media (max-width: 900px) { body { flex-direction: column; } .left-side { padding: 40px 25px; text-align: center; } .right-side { width: 100%; padding: 20px; } .login-card { padding: 32px 24px; } }
-        body.dark { background: linear-gradient(135deg, #1e1b4b, #312e81); }
-        body.dark .login-card { background: rgba(26,29,39,0.95); border-color: rgba(255,255,255,0.1); color: #e6f0ff; }
+        body.dark { background: #0f1117; }
+        body.dark .login-card { background: #1a1d27; border-color: rgba(255,255,255,0.1); color: #e6f0ff; }
         body.dark .login-card h2 { color: #f3f4f6; }
         body.dark .left-side { color: #e6f0ff; }
         body.dark .login-card input { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: #fff; }
