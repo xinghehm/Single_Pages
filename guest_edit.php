@@ -27,7 +27,7 @@ if ($content === null) die('文件不存在');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>编辑 - <?= htmlspecialchars($filename) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=245">
 </head>
 <body class="p-6">

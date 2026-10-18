@@ -3,13 +3,39 @@ require_once 'functions.php';
 if (isLoggedIn()) header('Location: users/dashboard.php');
 
 $error = '';
+$success = '';
 $smsVerifyEnabled = isSmsVerifyEnabled();
+$emailVerifyEnabled = ($config['email_verify_enabled'] ?? '1') === '1';
+$passwordLoginEnabled = true;
 
-// 处理登录
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginType = $_POST['login_type'] ?? 'password';
 
-    if ($loginType === 'phone' && $smsVerifyEnabled) {
+    // 邮箱验证码登录
+    if ($loginType === 'email') {
+        $email = trim($_POST['email'] ?? '');
+        $code = trim($_POST['email_code'] ?? '');
+        if (function_exists('verifyEmailCode') && verifyEmailCode($email, $code)) {
+            $pdo = getDB();
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+            if ($user) {
+                $_SESSION['user_id'] = $user['id'];
+                checkUserGroupExpire($user['id']);
+                addLoginLog($user['id'], $email, true);
+                header('Location: users/dashboard.php');
+                exit;
+            } else {
+                $error = '该邮箱未注册';
+            }
+        } else {
+            // 如果没有verifyEmailCode函数，降级为提示
+            $error = '邮箱验证码功能暂不可用，请使用账号密码登录';
+        }
+    }
+    // 手机号验证码登录
+    elseif ($loginType === 'phone' && $smsVerifyEnabled) {
         $phone = $_POST['phone'] ?? '';
         $sms_code = $_POST['sms_code'] ?? '';
         if (verifySmsCode($phone, $sms_code)) {
@@ -26,22 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             } else {
                 $error = '该手机号未注册';
-                addLoginLog(null, $phone, false, '手机号未注册');
             }
         } else {
             $error = '手机号或验证码错误';
-            addLoginLog(null, $phone, false, '验证码错误');
         }
-    } else {
+    }
+    // 账号密码登录
+    else {
         $login = trim($_POST['login'] ?? '');
         $password = $_POST['password'] ?? '';
-
-        // 极验验证
-        if (!geetest_verify()) {
-            $error = '请先完成安全验证';
-        }
-        // 登录失败次数限制
-        elseif (isLoginLocked($login)) {
+        if (isLoginLocked($login)) {
             $remaining = getLoginLockRemaining($login);
             $error = '登录失败次数过多，请 ' . ceil($remaining / 60) . ' 分钟后再试';
         } elseif (login($login, $password)) {
@@ -64,177 +84,180 @@ $config = getConfig();
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=241">
-    <style>
-        body {
-            background: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            position: relative;
-            overflow-x: hidden;
-        }
-        .left-side { flex: 1; padding: 60px 80px; display: flex; flex-direction: column; justify-content: center; color: #111827; }
-        .right-side { width: 480px; display: flex; align-items: center; padding: 40px; position: relative; z-index: 1; }
-        .login-card {
-            width: 100%; background: #ffffff;
-            border-radius: 20px; padding: 48px 40px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.15);
-        }
-        .login-card h2 { color: #111827; }
-        .tab-btn { padding: 8px 16px; border-radius: 8px; cursor: pointer; background: transparent; border: none; color: #6b7280; font-weight: 500; transition: all 0.2s; }
-        .tab-btn.active { background: #2563eb; color: white; }
-        .login-card input { background: rgba(255,255,255,0.8) !important; border: 1px solid #e5e7eb !important; border-radius: 12px !important; padding: 12px 16px !important; }
-        .login-card input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important; }
-        .dark-toggle { position: fixed; top: 20px; right: 20px; z-index: 100; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        @media (max-width: 900px) { body { flex-direction: column; } .left-side { padding: 40px 25px; text-align: center; } .right-side { width: 100%; padding: 20px; } .login-card { padding: 32px 24px; } }
-        body.dark { background: #0f1117; }
-        body.dark .login-card { background: #1a1d27; border-color: rgba(255,255,255,0.1); color: #e6f0ff; }
-        body.dark .login-card h2 { color: #f3f4f6; }
-        body.dark .left-side { color: #e6f0ff; }
-        body.dark .login-card input { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: #fff; }
-        body.dark .dark-toggle { background: #1a1d27; color: #fff; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></title>
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(180deg,#dbeafe 0%,#e8f2fe 40%,#f0f6ff 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-wrap{width:100%;max-width:420px}
+.back-btn{width:44px;height:44px;background:rgba(255,255,255,.7);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#374151;margin-bottom:16px;cursor:pointer;border:none;backdrop-filter:blur(10px)}
+.login-card{background:#fff;border-radius:24px;padding:36px 28px;box-shadow:0 20px 60px rgba(59,130,246,.12)}
+.login-card h1{font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;color:#1a1a2e}
+.login-card .subtitle{text-align:center;font-size:13px;color:#9ca3af;margin-bottom:28px}
+.error-msg{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;text-align:center}
+.success-msg{background:#f0fdf4;color:#16a34a;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;text-align:center}
+.tabs{display:flex;background:#f3f4f6;border-radius:12px;padding:4px;margin-bottom:24px}
+.tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;color:#6b7280;border-radius:9px;cursor:pointer;transition:all .2s;border:none;background:transparent}
+.tab.active{background:#fff;color:#3b82f6;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+.input-wrap{position:relative}
+.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:16px}
+.input-wrap input{width:100%;padding:13px 14px 13px 40px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;transition:all .2s;background:#fafafa}
+.input-wrap input:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.code-row{display:flex;gap:10px}
+.code-row .input-wrap{flex:1}
+.code-btn{padding:0 16px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;font-weight:600;color:#3b82f6;background:#fff;cursor:pointer;white-space:nowrap;transition:all .2s;min-width:110px}
+.code-btn:hover{border-color:#3b82f6;background:#eff6ff}
+.code-btn:disabled{color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed;background:#f9fafb}
+.login-btn{width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.login-btn:hover{background:#2563eb}
+.login-btn:active{transform:scale(.98)}
+.agreement{display:flex;align-items:flex-start;gap:8px;margin-top:16px;font-size:12px;color:#6b7280;line-height:1.5}
+.agreement input{margin-top:2px;accent-color:#3b82f6}
+.agreement a{color:#3b82f6;text-decoration:none}
+.links{display:flex;justify-content:space-between;margin-top:20px;font-size:13px}
+.links a{color:#6b7280;text-decoration:none}
+.links a:last-child{color:#3b82f6;font-weight:600}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+</style>
 </head>
 <body>
-<button class="dark-toggle" onclick="toggleDark()" title="切换深色模式"><i class="ri-moon-line"></i></button>
-<div class="left-side">
-    <img src="<?= htmlspecialchars($config['site_logo'] ?? 'https://www.xhehm.com/assets/img/LOGO-Pages.png') ?>" style="height: 180px; margin-bottom: 33px;">
-    <h1 class="text-3xl md:text-4xl font-bold mb-4">轻松托管,<?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?><span class="text-blue-600">全程赋能</span></h1>
-    <div class="flex gap-8 mt-6"><div><div class="text-3xl font-bold text-blue-600"><?= htmlspecialchars($config['stats_projects'] ?? '100+') ?></div><div class="text-sm">成功托管网站</div></div><div><div class="text-3xl font-bold text-blue-600"><?= htmlspecialchars($config['stats_features'] ?? '10+') ?></div><div class="text-sm">自研优化功能</div></div></div>
-    <div class="flex flex-wrap gap-3 mt-6"><?php foreach (explode('|', $config['tags'] ?? '') as $tag): ?><span class="bg-white/20 px-4 py-1 rounded-full text-sm"><?= htmlspecialchars($tag) ?></span><?php endforeach; ?></div>
+<div class="login-wrap">
+<a href="index.php" class="back-btn"><i class="ri-arrow-left-line"></i></a>
+<div class="login-card">
+<h1>欢迎回来</h1>
+<p class="subtitle"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?> 控制台</p>
+<?php if ($error): ?><div class="error-msg"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+<?php if ($success): ?><div class="success-msg"><?= htmlspecialchars($success) ?></div><?php endif; ?>
+
+<div class="tabs">
+<?php $ft=true; ?>
+<?php if($emailVerifyEnabled): ?><button type="button" class="tab <?=$ft?'active':''?>" data-tab="email"><?php $ft=false; ?>邮箱验证码</button><?php endif; ?>
+<?php if($smsVerifyEnabled): ?><button type="button" class="tab <?=$ft?'active':''?>" data-tab="phone"><?php $ft=false; ?>手机验证码</button><?php endif; ?>
+<button type="button" class="tab <?=$ft?'active':''?>" data-tab="password"><?php $ft=false; ?>账号密码</button>
 </div>
-<div class="right-side">
-    <div class="login-card">
-        <h2 class="text-2xl font-bold mb-6">账号登录</h2>
-        <?php if ($error): ?><div class="error mb-4"><?= htmlspecialchars($error) ?></div><?php endif; ?>
 
-        <div class="flex gap-2 mb-4">
-            <button type="button" id="tabPassword" class="tab-btn active">密码登录</button>
-            <?php if ($smsVerifyEnabled): ?>
-            <button type="button" id="tabPhone" class="tab-btn">验证码登录</button>
-            <?php endif; ?>
-        </div>
+<!-- 邮箱验证码登录 -->
+<?php if($emailVerifyEnabled): ?>
+<div class="tab-panel" id="panel-email">
+<form method="post" id="form-email">
+<input type="hidden" name="login_type" value="email">
+<div class="form-group">
+<div class="input-wrap"><i class="ri-mail-line"></i><input type="email" name="email" placeholder="邮箱（QQ/126/163）" required></div>
+</div>
+<div class="form-group">
+<div class="code-row">
+<div class="input-wrap"><i class="ri-shield-keyhole-line"></i><input type="text" name="email_code" placeholder="邮箱验证码（6位）" maxlength="6" required></div>
+<button type="button" class="code-btn" id="sendEmailCode">获取验证码</button>
+</div>
+</div>
+<button type="submit" class="login-btn">登 录</button>
+</form>
+</div>
+<?php endif; ?>
 
-        <!-- 密码登录 -->
-        <div id="passwordPanel">
-            <form method="post" id="loginForm">
-                <input type="hidden" name="login_type" value="password">
-                <input type="text" name="login" placeholder="用户名 / 邮箱" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-4">
-                <input type="password" name="password" placeholder="密码" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-4">
-                <?= geetest_field() ?>
-                <button type="submit" class="btn-primary w-full py-3">登录</button>
-            </form>
-        </div>
+<!-- 手机验证码登录 -->
+<?php if($smsVerifyEnabled): ?>
+<div class="tab-panel" id="panel-phone">
+<form method="post">
+<input type="hidden" name="login_type" value="phone">
+<div class="form-group"><div class="input-wrap"><i class="ri-phone-line"></i><input type="tel" name="phone" placeholder="手机号" maxlength="11" required></div></div>
+<div class="form-group"><div class="code-row"><div class="input-wrap"><i class="ri-shield-keyhole-line"></i><input type="text" name="sms_code" placeholder="短信验证码（6位）" maxlength="6" required></div><button type="button" class="code-btn" id="sendSmsCode">获取验证码</button></div></div>
+<button type="submit" class="login-btn">登 录</button>
+</form>
+</div>
+<?php endif; ?>
 
-        <!-- 验证码登录 -->
-        <?php if ($smsVerifyEnabled): ?>
-        <div id="phonePanel" style="display: none;">
-            <form method="post" id="phoneForm">
-                <input type="hidden" name="login_type" value="phone">
-                <input type="text" name="phone" id="loginPhone" placeholder="手机号" required class="w-full px-4 py-3 rounded-full bg-white/40 border border-gray-200 mb-3">
-                <div class="flex gap-2 mb-6">
-                    <input type="text" name="sms_code" placeholder="短信验证码" required class="flex-1 px-4 py-3 rounded-full bg-white/40 border border-gray-200">
-                    <button type="button" id="loginSendSmsBtn" class="btn-secondary whitespace-nowrap px-4">获取验证码</button>
-                </div>
-                <?= geetest_field("phone") ?>
-                <button type="submit" class="btn-primary w-full py-3">登录</button>
-            </form>
-        </div>
-        <?php endif; ?>
+<!-- 账号密码登录 -->
+<div class="tab-panel" id="panel-password">
+<form method="post" id="form-password">
+<input type="hidden" name="login_type" value="password">
+<div class="form-group">
+<div class="input-wrap"><i class="ri-user-line"></i><input type="text" name="login" placeholder="用户名 / 邮箱" required></div>
+</div>
+<div class="form-group">
+<div class="input-wrap"><i class="ri-lock-line"></i><input type="password" name="password" placeholder="密码" required></div>
+</div>
+<button type="submit" class="login-btn">登 录</button>
+</form>
+</div>
 
-        <div class="mt-6 text-center space-y-2">
-            <a href="forgot_password.php" class="text-blue-600 block text-sm">忘记密码？</a>
-            <a href="register.php" class="text-gray-600 text-sm">注册新账号</a>
-        </div>
-        <div class="text-center text-xs text-gray-500 mt-8"><?= htmlspecialchars($config['site_footer'] ?? '') ?></div>
-    </div>
+<div class="agreement">
+<input type="checkbox" id="agree" checked>
+<label for="agree">我已阅读并同意 <a href="#">《用户条款》</a><a href="#">《隐私政策》</a></label>
+</div>
+<div class="links">
+<a href="forgot_password.php">忘记密码？</a>
+<a href="register.php">立即注册</a>
+</div>
+</div>
 </div>
 
 <script>
-    function toggleDark() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('dark_mode', document.body.classList.contains('dark') ? '1' : '0');
-    }
-    if (localStorage.getItem('dark_mode') === '1') document.body.classList.add('dark');
+// Tab切换
+document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+        document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+        document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+        this.classList.add('active');
+        document.getElementById('panel-' + this.dataset.tab).classList.add('active');
+    });
+});
 
-    const tabPassword = document.getElementById('tabPassword');
-    const tabPhone = document.getElementById('tabPhone');
-    const passwordPanel = document.getElementById('passwordPanel');
-    const phonePanel = document.getElementById('phonePanel');
+// 手机验证码
+var smsBtn=document.getElementById('sendSmsCode');
+if(smsBtn){smsBtn.onclick=function(){var p=document.querySelector('input[name=phone]').value;if(!/^1[3-9]\d{9}$/.test(p)){alert('请输入正确手机号');return;}var b=this;b.disabled=true;fetch('send_sms.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'phone='+encodeURIComponent(p)+'&type=login'}).then(r=>r.json()).then(d=>{if(d.success){var c=60;b.textContent=c+'s';var t=setInterval(()=>{c--;b.textContent=c+'s';if(c<=0){clearInterval(t);b.disabled=false;b.textContent='获取验证码';}},1000);}else{alert(d.msg||'失败');b.disabled=false;}}).catch(()=>{alert('失败');b.disabled=false;});};}
 
-    if (tabPassword && tabPhone) {
-        tabPassword.addEventListener('click', function() {
-            tabPassword.classList.add('active');
-            tabPhone.classList.remove('active');
-            passwordPanel.style.display = 'block';
-            phonePanel.style.display = 'none';
-        });
-        tabPhone.addEventListener('click', function() {
-            tabPhone.classList.add('active');
-            tabPassword.classList.remove('active');
-            phonePanel.style.display = 'block';
-            passwordPanel.style.display = 'none';
-        });
-    }
-
-    <?php if ($smsVerifyEnabled): ?>
-    let loginCountdown = 0;
-    const loginSendBtn = document.getElementById('loginSendSmsBtn');
-    const loginPhoneInput = document.getElementById('loginPhone');
-
-    loginSendBtn.addEventListener('click', function() {
-        if (loginCountdown > 0) return;
-        const phone = loginPhoneInput.value.trim();
-        if (!/^1[3-9]\d{9}$/.test(phone)) {
-            alert('请输入有效的手机号');
-            return;
-        }
-        var gv = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
-        if (!gv('geetest_lot_number_phone') && !gv('geetest_challenge_phone')) {
-            alert('请先完成验证码验证');
-            return;
-        }
-        fetch('send_sms.php', {
+// 发送邮箱验证码
+var emailCodeBtn = document.getElementById('sendEmailCode');
+if (emailCodeBtn) {
+    emailCodeBtn.addEventListener('click', function(){
+        var emailInput = document.querySelector('#panel-email input[name=email]');
+        var email = emailInput.value.trim();
+        if (!email) { alert('请先输入邮箱'); emailInput.focus(); return; }
+        var btn = this;
+        btn.disabled = true;
+        btn.textContent = '发送中...';
+        fetch('send_email_code.php', {
             method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'phone=' + encodeURIComponent(phone) + '&type=login' +
-            '&geetest_lot_number=' + encodeURIComponent(gv('geetest_lot_number_phone')) +
-            '&geetest_captcha_output=' + encodeURIComponent(gv('geetest_captcha_output_phone')) +
-            '&geetest_pass_token=' + encodeURIComponent(gv('geetest_pass_token_phone')) +
-            '&geetest_gen_time=' + encodeURIComponent(gv('geetest_gen_time_phone')) +
-            '&geetest_challenge=' + encodeURIComponent(gv('geetest_challenge_phone')) +
-            '&geetest_validate=' + encodeURIComponent(gv('geetest_validate_phone')) +
-            '&geetest_seccode=' + encodeURIComponent(gv('geetest_seccode_phone'))
-        })
-        .then(res => res.json())
-        .then(data => {
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: 'email=' + encodeURIComponent(email)
+        }).then(function(r){return r.json()}).then(function(data){
             if (data.success) {
-                alert('验证码已发送');
-                loginCountdown = 60;
-                loginSendBtn.textContent = loginCountdown + '秒后重试';
-                const timer = setInterval(() => {
-                    loginCountdown--;
-                    if (loginCountdown <= 0) {
-                        clearInterval(timer);
-                        loginSendBtn.textContent = '获取验证码';
-                    } else {
-                        loginSendBtn.textContent = loginCountdown + '秒后重试';
-                    }
+                var count = 60;
+                btn.textContent = count + 's后重发';
+                var timer = setInterval(function(){
+                    count--;
+                    if (count <= 0) { clearInterval(timer); btn.disabled = false; btn.textContent = '获取验证码'; }
+                    else { btn.textContent = count + 's后重发'; }
                 }, 1000);
             } else {
-                alert(data.message);
+                alert(data.message || '发送失败');
+                btn.disabled = false;
+                btn.textContent = '获取验证码';
             }
-        })
-        .catch(err => alert('发送失败，请重试'));
+        }).catch(function(){
+            alert('发送失败，请稍后重试');
+            btn.disabled = false;
+            btn.textContent = '获取验证码';
+        });
     });
-    <?php endif; ?>
+}
+
+// 表单提交前检查协议
+document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit', function(e){
+        if (!document.getElementById('agree').checked) {
+            e.preventDefault();
+            alert('请先阅读并同意用户条款和隐私政策');
+        }
+    });
+});
 </script>
-<?= geetest_init_js([['form'=>'#loginForm','prefix'=>''],['form'=>'#phoneForm','prefix'=>'phone']]) ?>
 </body>
 </html>
+

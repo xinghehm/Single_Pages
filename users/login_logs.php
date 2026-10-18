@@ -6,7 +6,7 @@ $config = getConfig();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>登录日志 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><?= outputUserBgStyle() ?>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>登录日志 - <?= htmlspecialchars($config['site_name']) ?></title><link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><?= outputUserBgStyle() ?>
 <style>
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
 .mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
@@ -24,32 +24,9 @@ $config = getConfig();
 </style>
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)"><span></span><span></span><span></span></button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>function toggleSidebar(btn) { document.querySelector('.sidebar').classList.toggle('show'); document.querySelector('.sidebar-overlay').classList.toggle('show'); }</script>
-
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
-        </div>
-        <nav>
-            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php" class="active"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
-            </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 
 <main class="flex-1 p-6">
 <div class="mb-6"><h1 class="text-2xl font-bold">登录日志</h1><p class="text-gray-500">最近 <?= count($logs) ?> 条登录记录</p></div>
@@ -75,5 +52,20 @@ $config = getConfig();
 <?php endif; ?>
 </div>
 </main>
+<script>
+function toggleSidebar(){
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

@@ -107,7 +107,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 </style>
-</head>\n<body class=\"has-sidebar\">\n    <h1>New Page</h1>\n</body>\n</html>";
+</head>\n<body class=\"has-sidebar\">\n    <h1>New Page</h1>\n<script>
+function toggleSidebar(){
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
+</body>\n</html>";
         addOrUpdateFile($proId, $filename, $content, 0);
         header("Location: project_detail.php?pro=$proId");
         exit;
@@ -231,5 +237,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
     </div>
+<script>
+function toggleSidebar(){
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
 </body>
 </html>
+
+
+
+

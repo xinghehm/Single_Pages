@@ -52,7 +52,7 @@ $config = getConfig();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新建文件 - <?= htmlspecialchars($config['site_name'] ?? '单页工坊Pages') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=245">
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">

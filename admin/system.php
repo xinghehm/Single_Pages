@@ -37,31 +37,21 @@ $backups = listBackups();
 $expiredGuests = getExpiredGuestProjects();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245">
-<style>
-.mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); z-index: 999; align-items: center; justify-content: space-between; padding: 0 16px; }
-.mobile-topbar .mobile-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
-.mobile-topbar .logo-icon { width: 32px; height: 32px; background: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
-.hamburger-btn { width: 40px; height: 40px; background: #f3f4f6; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
-.hamburger-btn span { display: block; width: 20px; height: 2px; background: #333; border-radius: 2px; }
-.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 998; }
-.sidebar-overlay.show { display: block; }
-@media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    .sidebar { position: fixed !important; left: -280px !important; top: 0; bottom: 0; z-index: 1000 !important; transition: left 0.3s !important; width: 280px !important; padding-top: 70px !important; }
-    .sidebar.show { left: 0 !important; }
-    main { padding: 16px !important; padding-top: 72px !important; }
-}
-</style>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系统信息 - <?= htmlspecialchars($config['site_name']) ?></title>
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=245">
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar"><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div><button class="hamburger-btn" onclick="toggleSidebar(this)"><span></span><span></span><span></span></button></div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-server-line"></i></div><span>系统信息</span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>function toggleSidebar(btn) { document.querySelector('.sidebar').classList.toggle('show'); document.querySelector('.sidebar-overlay').classList.toggle('show'); }</script>
-
+<script>function toggleSidebar(){document.querySelector('.sidebar').classList.toggle('show');document.querySelector('.sidebar-overlay').classList.toggle('show');}</script>
 <?php include 'sidebar.php'; ?>
 
-<main class="flex-1 p-6" style="min-width:0;">
+<main>
 <h1 class="text-2xl font-bold mb-6">系统信息</h1>
 
 <?php if ($message): ?>
@@ -155,3 +145,5 @@ $expiredGuests = getExpiredGuestProjects();
 </main>
 </body>
 </html>
+
+

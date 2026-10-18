@@ -37,7 +37,7 @@ function projectCoverGradient($name) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的项目 - <?= htmlspecialchars($config['site_name']) ?></title>
-<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="../style.css?v=245">
 <?= outputUserBgStyle() ?>
 <style>
@@ -85,32 +85,9 @@ function projectCoverGradient($name) {
 <body class="has-sidebar">
 
 <!-- 移动端顶部栏 -->
-<div class="mobile-topbar">
-    <div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div>
-    <button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<!-- 侧边栏 -->
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
-        </div>
-        <nav>
-            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
-            <a href="projects.php" class="active"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
-        </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 
 <main>
     <!-- 页头 -->
@@ -315,3 +292,11 @@ document.getElementById('deleteModal').addEventListener('click', function(e) { i
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+

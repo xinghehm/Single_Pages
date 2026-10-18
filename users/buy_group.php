@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = '该用户组不可购买';
     } elseif ($group['price'] <= 0) {
         $error = '该用户组价格异常';
+    } elseif ($group['duration'] == 0 && $user['group_id'] == $groupId) {
+        $error = '您已拥有该永久会员组，无需重复购买';
     } elseif (!in_array($payType, $enabledPayMethods)) {
         $error = '该支付方式未启用';
     } else {
@@ -64,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>购买用户组 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><style>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>购买用户组 - <?= htmlspecialchars($config['site_name']) ?></title><link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
 .mobile-topbar {
     display: none;
@@ -162,27 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar"><div class="mobile-logo"><div class="logo-icon"><i class="ri-vip-crown-line"></i></div><span>购买用户组</span></div><button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单"><span></span><span></span><span></span></button></div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-vip-crown-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
-        </div>
-        <nav>
-            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php" class="active"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
-            </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 <main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
     <?php if ($message): ?><div class="success mb-4"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="error mb-4"><?= htmlspecialchars($error) ?></div><?php endif; ?>
@@ -211,9 +195,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <li class="text-gray-400"><?= htmlspecialchars($g['description']) ?></li>
                 <?php endif; ?>
             </ul>
+            <?php if ($g['duration'] == 0 && $g['id'] == ($user['group_id'] ?? 1)): ?>
+            <button disabled class="btn-primary w-full" style="opacity:0.5;cursor:not-allowed;">
+                <i class="ri-check-line"></i> 已拥有（永久）
+            </button>
+            <?php else: ?>
             <button onclick="showPayModal(<?= $g['id'] ?>, '<?= htmlspecialchars($g['name'], ENT_QUOTES) ?>', <?= $g['price'] ?>)" class="btn-primary w-full">
                 <i class="ri-shopping-cart-line"></i> 立即购买
             </button>
+            <?php endif; ?>
         </div>
         <?php endforeach; ?>
     </div>
@@ -221,23 +211,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </main>
 
 <!-- 支付方式选择模态框 -->
-<div id="payModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-        <h2 class="text-lg font-bold mb-4">选择支付方式</h2>
-        <p class="text-gray-500 mb-4">购买 <span id="payGroupName" class="font-medium"></span>，金额 <span id="payGroupPrice" class="font-medium text-blue-600"></span> 元</p>
+<div id="payModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="card" style="width:100%;max-width:420px;margin:16px;max-height:90vh;overflow-y:auto;">
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">选择支付方式</h2>
+        <p style="color:#6b7280;font-size:14px;margin-bottom:16px;">购买 <span id="payGroupName" class="font-medium"></span>，金额 <span id="payGroupPrice" class="font-medium text-blue-600"></span> 元</p>
         <form method="POST" id="payForm">
             <input type="hidden" name="group_id" id="payGroupId">
-            <div class="space-y-3 mb-6">
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
                 <?php if (empty($enabledPayMethods) || count($enabledPayMethods) == 0): ?>
-                <div class="text-center text-gray-500 py-4">
-                    <i class="ri-information-line text-2xl mb-2"></i>
+                <div style="text-align:center;color:#6b7280;padding:16px 0;">
+                    <i class="ri-information-line" style="font-size:24px;margin-bottom:8px;display:block;"></i>
                     <p>暂未启用任何支付方式，请联系管理员</p>
                 </div>
                 <?php else: ?>
                 <?php $first = true; foreach ($enabledPayMethods as $method): ?>
                 <?php if (isset($allPayMethods[$method])): ?>
-                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input type="radio" name="pay_type" value="<?= $method ?>" <?= $first ? 'checked' : '' ?> class="w-4 h-4">
+                <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
+                    <input type="radio" name="pay_type" value="<?= $method ?>" <?= $first ? 'checked' : '' ?> style="width:16px;height:16px;">
                     <i class="<?= $allPayMethods[$method]['icon'] ?> <?= $allPayMethods[$method]['color'] ?> text-xl"></i>
                     <span><?= $allPayMethods[$method]['name'] ?></span>
                 </label>
@@ -245,21 +235,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            </div>
-            <div class="flex gap-3">
-                <button type="button" onclick="document.getElementById('payModal').classList.add('hidden')" class="btn-secondary flex-1">取消</button>
-                <button type="submit" class="btn-primary flex-1">确认支付</button>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="document.getElementById('payModal').style.display='none'" class="btn-secondary" style="flex:1;">取消</button>
+                <button type="submit" class="btn-primary" style="flex:1;">确认支付</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+document.getElementById('payModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('payModal').style.display = 'none';
+});
 function showPayModal(id, name, price) {
     document.getElementById('payGroupId').value = id;
     document.getElementById('payGroupName').textContent = name;
     document.getElementById('payGroupPrice').textContent = price;
-    document.getElementById('payModal').classList.remove('hidden');
+    document.getElementById('payModal').style.display='flex';
 }
 function toggleSidebar(btn) {
     document.querySelector('.sidebar').classList.toggle('show');
@@ -268,3 +260,13 @@ function toggleSidebar(btn) {
 }
 </script>
 </body></html>
+
+
+
+
+
+
+
+
+
+

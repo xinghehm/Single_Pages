@@ -4,9 +4,15 @@ $currentPage = basename($_SERVER['PHP_SELF'] ?? 'index.php');
 $menuItems = [
     ['index.php', 'ri-dashboard-line', '仪表盘'],
     ['users.php', 'ri-user-line', '用户管理'],
+    ['orders.php', 'ri-file-list-3-line', '订单管理'],
+    ['refunds.php', 'ri-refund-line', '退款管理'],
     ['groups.php', 'ri-group-line', '用户组管理'],
     ['projects.php', 'ri-folder-line', '项目管理'],
     ['templates.php', 'ri-apps-line', '模板管理'],
+    ['home_templates.php', 'ri-layout-line', '首页模板'],
+    ['content_config.php', 'ri-file-text-line', '内容配置'],
+    ['announcements.php', 'ri-notification-3-line', '公告管理'],
+    ['email_notify.php', 'ri-mail-send-line', '邮箱通知'],
     ['login_logs.php', 'ri-history-line', '登录日志'],
     ['system.php', 'ri-server-line', '系统信息'],
     ['config.php', 'ri-settings-line', '网站配置'],
@@ -32,3 +38,6 @@ $menuItems = [
         <a href="logout.php"><i class="ri-logout-box-line"></i> 退出登录</a>
     </div>
 </aside>
+
+
+

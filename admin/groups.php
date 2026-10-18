@@ -87,117 +87,30 @@ foreach ($groups as $g) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>用户组管理 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><style>
-/* 移动端顶部导航 - 内联防止CSS丢失 */
-.mobile-topbar {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 56px;
-    background: #fff;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    z-index: 999;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-}
-.mobile-topbar .mobile-logo {
-    display: flex; align-items: center; gap: 8px;
-    font-weight: 600; font-size: 15px;
-}
-.mobile-topbar .logo-icon {
-    width: 32px; height: 32px;
-    background: #2563eb;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 18px;
-}
-.hamburger-btn {
-    width: 40px; height: 40px;
-    background: #f3f4f6;
-    border: none; border-radius: 10px;
-    cursor: pointer;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 5px;
-    transition: all 0.3s ease;
-}
-.hamburger-btn span {
-    display: block;
-    width: 20px; height: 2px;
-    background: #333;
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.hamburger-btn.active span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-}
-.hamburger-btn.active span:nth-child(2) {
-    opacity: 0;
-    transform: scaleX(0);
-}
-.hamburger-btn.active span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-}
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 998;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.sidebar-overlay.show {
-    display: block;
-    opacity: 1;
-}
-@media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    .sidebar {
-        position: fixed !important;
-        left: -280px !important;
-        top: 0; bottom: 0;
-        z-index: 1000 !important;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 280px !important;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.12);
-        padding-top: 70px !important;
-    }
-    .sidebar.show { left: 0 !important; }
-    main {
-        padding: 16px !important;
-        padding-top: 72px !important;
-        min-width: 0 !important;
-        overflow-x: hidden !important;
-    }
-    body { overflow-x: hidden !important; }
-    .overflow-x-auto {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        width: 100% !important;
-    }
-    .overflow-x-auto table {
-        min-width: 600px !important;
-        width: auto !important;
-    }
-}
-</style>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户组管理 - <?= htmlspecialchars($config['site_name']) ?></title>
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=245">
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar"><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name']) ?></span></div><button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单"><span></span><span></span><span></span></button></div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-group-line"></i></div><span>用户组管理</span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<script>function toggleSidebar(){document.querySelector('.sidebar').classList.toggle('show');document.querySelector('.sidebar-overlay').classList.toggle('show');}</script>
 <?php include 'sidebar.php'; ?>
-<main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
+
+<main>
     <?php if ($message): ?><div class="success mb-4"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="error mb-4"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">用户组管理</h1>
-        <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="btn-primary"><i class="ri-add-line"></i> 新增用户组</button>
+        <button onclick="document.getElementById('addModal').style.display='flex'" class="btn-primary"><i class="ri-add-line"></i> 新增用户组</button>
     </div>
 
-    <div class="glass-card p-4 overflow-x-auto">
+    <div class="table-wrap">
         <table class="w-full text-sm">
             <thead class="text-gray-500 border-b">
                 <tr><th class="text-left p-3">ID</th><th class="text-left p-3">用户组名称</th><th class="text-left p-3">项目数限制</th><th class="text-left p-3">售卖</th><th class="text-left p-3">价格</th><th class="text-left p-3">有效期</th><th class="text-left p-3">用户数</th><th class="text-left p-3">描述</th><th class="text-left p-3">操作</th></tr>
@@ -214,15 +127,15 @@ foreach ($groups as $g) {
                 <td class="p-3"><?= $groupStats[$g['id']] ?? 0 ?> 人</td>
                 <td class="p-3 text-gray-500 text-xs max-w-xs truncate"><?= htmlspecialchars($g['description'] ?? '') ?></td>
                 <td class="p-3 space-x-2 whitespace-nowrap">
-                    <button onclick="editGroup(<?= $g['id'] ?>, '<?= htmlspecialchars($g['name'], ENT_QUOTES) ?>', <?= $g['project_limit'] ?>, '<?= htmlspecialchars($g['description'] ?? '', ENT_QUOTES) ?>', <?= $g['is_public'] ?>, <?= $g['price'] ?>, <?= $g['duration'] ?>)" class="text-blue-500 hover:underline">编辑</button>
+                    <button onclick="editGroup(<?= $g['id'] ?>, '<?= htmlspecialchars($g['name'], ENT_QUOTES) ?>', <?= $g['project_limit'] ?>, '<?= htmlspecialchars($g['description'] ?? '', ENT_QUOTES) ?>', <?= $g['is_public'] ?>, <?= $g['price'] ?>, <?= $g['duration'] ?>)" class="btn-secondary btn-sm"><i class="ri-edit-line"></i> 编辑</button>
                     <?php if (!$g['is_default']): ?>
                     <form method="POST" class="inline" onsubmit="return confirm('确定删除？该组用户将移至默认组')">
                         <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $g['id'] ?>">
-                        <button type="submit" class="text-red-500 hover:underline">删除</button>
+                        <button type="submit" class="btn-danger btn-sm"><i class="ri-delete-bin-line"></i> 删除</button>
                     </form>
                     <form method="POST" class="inline">
                         <input type="hidden" name="action" value="set_default"><input type="hidden" name="id" value="<?= $g['id'] ?>">
-                        <button type="submit" class="text-green-600 hover:underline">设为默认</button>
+                        <button type="submit" class="btn-secondary btn-sm"><i class="ri-star-line"></i> 设为默认</button>
                     </form>
                     <?php endif; ?>
                 </td>
@@ -234,22 +147,22 @@ foreach ($groups as $g) {
 </main>
 
 <!-- 新增/编辑模态框 -->
-<div id="addModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-        <h2 class="text-lg font-bold mb-4" id="modalTitle">新增用户组</h2>
+<div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="card" style="width:100%;max-width:480px;margin:16px;max-height:90vh;overflow-y:auto;">
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:20px;" id="modalTitle">新增用户组</h2>
         <form method="POST">
             <input type="hidden" name="action" id="modalAction" value="add">
             <input type="hidden" name="id" id="modalId" value="">
-            <div class="space-y-4">
-                <div><label class="block text-sm font-medium mb-1">用户组名称</label><input type="text" name="name" id="modalName" required class="w-full px-3 py-2 border rounded-lg"></div>
-                <div><label class="block text-sm font-medium mb-1">项目数限制</label><input type="number" name="project_limit" id="modalLimit" value="5" min="1" required class="w-full px-3 py-2 border rounded-lg"></div>
-                <div class="flex items-center gap-3"><label class="block text-sm font-medium">公开售卖</label><input type="checkbox" name="is_public" id="modalPublic" class="w-4 h-4"></div>
-                <div><label class="block text-sm font-medium mb-1">价格 (元)</label><input type="number" name="price" id="modalPrice" value="0" min="0" step="0.01" class="w-full px-3 py-2 border rounded-lg"></div>
-                <div><label class="block text-sm font-medium mb-1">有效期 (天，0=永久)</label><input type="number" name="duration" id="modalDuration" value="0" min="0" class="w-full px-3 py-2 border rounded-lg"></div>
-                <div><label class="block text-sm font-medium mb-1">描述</label><textarea name="description" id="modalDesc" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea></div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div class="form-group"><label>用户组名称</label><input type="text" name="name" id="modalName" required class=""></div>
+                <div class="form-group"><label>项目数限制</label><input type="number" name="project_limit" id="modalLimit" value="5" min="1" required class=""></div>
+                <div class="form-group"><label style="display:flex;align-items:center;gap:8px;">公开售卖</label><input type="checkbox" name="is_public" id="modalPublic" style="width:auto;"></div>
+                <div class="form-group"><label>价格 (元)</label><input type="number" name="price" id="modalPrice" value="0" min="0" step="0.01" class=""></div>
+                <div class="form-group"><label>有效期 (天，0=永久)</label><input type="number" name="duration" id="modalDuration" value="0" min="0" class=""></div>
+                <div class="form-group"><label>描述</label><textarea name="description" id="modalDesc" rows="2" class=""></textarea></div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="btn-secondary flex-1">取消</button>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="button" onclick="document.getElementById('addModal').style.display='none'" class="btn-secondary flex-1">取消</button>
                 <button type="submit" class="btn-primary flex-1">保存</button>
             </div>
         </form>
@@ -257,6 +170,21 @@ foreach ($groups as $g) {
 </div>
 
 <script>
+function openGroupModal() {
+    document.getElementById('modalTitle').textContent = '新增用户组';
+    document.getElementById('modalAction').value = 'add';
+    document.getElementById('modalId').value = '';
+    document.getElementById('modalName').value = '';
+    document.getElementById('modalLimit').value = 5;
+    document.getElementById('modalDesc').value = '';
+    document.getElementById('modalPublic').checked = false;
+    document.getElementById('modalPrice').value = 0;
+    document.getElementById('modalDuration').value = 0;
+    document.getElementById('addModal').style.display = 'flex';
+}
+document.getElementById('addModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('addModal').style.display = 'none';
+});
 function editGroup(id, name, limit, desc, isPublic, price, duration) {
     document.getElementById('modalTitle').textContent = '编辑用户组';
     document.getElementById('modalAction').value = 'edit';
@@ -267,7 +195,7 @@ function editGroup(id, name, limit, desc, isPublic, price, duration) {
     document.getElementById('modalPublic').checked = isPublic == 1;
     document.getElementById('modalPrice').value = price;
     document.getElementById('modalDuration').value = duration;
-    document.getElementById('addModal').classList.remove('hidden');
+    document.getElementById('addModal').style.display='flex';
 }
 function toggleSidebar(btn) {
     document.querySelector('.sidebar').classList.toggle('show');
@@ -276,3 +204,6 @@ function toggleSidebar(btn) {
 }
 </script>
 </body></html>
+
+
+

@@ -57,134 +57,21 @@ foreach ($projects as &$p) {
 $guestProjects = $pdo->query("SELECT * FROM guest_projects ORDER BY id DESC")->fetchAll();
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>项目管理 - <?= htmlspecialchars($config['site_name']) ?></title><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=245"><style>
-/* 移动端顶部导航 - 内联防止CSS丢失 */
-.mobile-topbar {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 56px;
-    background: #fff;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    z-index: 999;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-}
-.mobile-topbar .mobile-logo {
-    display: flex; align-items: center; gap: 8px;
-    font-weight: 600; font-size: 15px;
-}
-.mobile-topbar .logo-icon {
-    width: 32px; height: 32px;
-    background: #2563eb;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 18px;
-}
-.hamburger-btn {
-    width: 40px; height: 40px;
-    background: #f3f4f6;
-    border: none; border-radius: 10px;
-    cursor: pointer;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 5px;
-    transition: all 0.3s ease;
-}
-.hamburger-btn span {
-    display: block;
-    width: 20px; height: 2px;
-    background: #333;
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.hamburger-btn.active span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-}
-.hamburger-btn.active span:nth-child(2) {
-    opacity: 0;
-    transform: scaleX(0);
-}
-.hamburger-btn.active span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-}
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 998;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.sidebar-overlay.show {
-    display: block;
-    opacity: 1;
-}
-@media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    .sidebar {
-        position: fixed !important;
-        left: -280px !important;
-        top: 0; bottom: 0;
-        z-index: 1000 !important;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 280px !important;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.12);
-        padding-top: 70px !important;
-    }
-    .sidebar.show { left: 0 !important; }
-    main {
-        padding: 16px !important;
-        padding-top: 72px !important;
-        min-width: 0 !important;
-        overflow-x: hidden !important;
-    }
-    body { overflow-x: hidden !important; }
-    .overflow-x-auto {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        width: 100% !important;
-    }
-    .overflow-x-auto table {
-        min-width: 600px !important;
-        width: auto !important;
-    }
-}
-</style>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目管理 - <?= htmlspecialchars($config['site_name']) ?></title>
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=245">
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo">
-        <div class="logo-icon"><i class="ri-cloud-line"></i></div>
-        <span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span>
-    </div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单">
-        <span></span><span></span><span></span>
-    </button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-folder-line"></i></div><span>项目管理</span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>
-function toggleSidebar(btn) {
-    document.querySelector('.sidebar').classList.toggle('show');
-    document.querySelector('.sidebar-overlay').classList.toggle('show');
-    if (btn) btn.classList.toggle('active');
-    else document.querySelector('.hamburger-btn').classList.toggle('active');
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.sidebar a').forEach(function(a) {
-        a.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.remove('show');
-            document.querySelector('.sidebar-overlay').classList.remove('show');
-            document.querySelector('.hamburger-btn').classList.remove('active');
-        });
-    });
-});
-</script>
-
+<script>function toggleSidebar(){document.querySelector('.sidebar').classList.toggle('show');document.querySelector('.sidebar-overlay').classList.toggle('show');}</script>
 <?php include 'sidebar.php'; ?>
-<main class="flex-1 p-6" style="min-width: 0; overflow-x: hidden;">
+
+<main>
 <div class="card" style="overflow: hidden;">
     <h1 class="text-lg font-bold mb-4">项目管理</h1>
     
@@ -196,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- 用户项目列表 -->
     <?php if ($tab === 'user'): ?>
-    <div class="overflow-x-auto" style="width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch;"><table class="w-full text-sm"><thead class="text-gray-500 border-b"><tr><th class="text-left p-3">项目ID</th><th class="text-left p-3">项目名</th><th class="text-left p-3">所属用户</th><th class="text-left p-3">文件数</th><th class="text-left p-3">创建时间</th><th class="text-left p-3">操作</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="w-full text-sm"><thead class="text-gray-500 border-b"><tr><th class="text-left p-3">项目ID</th><th class="text-left p-3">项目名</th><th class="text-left p-3">所属用户</th><th class="text-left p-3">文件数</th><th class="text-left p-3">创建时间</th><th class="text-left p-3">操作</th></tr></thead><tbody>
     <?php foreach ($projects as $pro): ?>
     <tr class="border-t"><td class="p-3 font-mono text-xs"><?= htmlspecialchars($pro['pro_id']) ?></td><td class="p-3"><?= htmlspecialchars($pro['name']) ?></td><td class="p-3"><?= htmlspecialchars($pro['username']) ?></td><td class="p-3"><?= $pro['file_count'] ?></td><td class="p-3"><?= date('Y-m-d', $pro['created_at']) ?></td>
     <td class="p-3 space-x-2">
@@ -211,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- 访客项目列表 -->
     <?php if ($tab === 'guest'): ?>
-    <div class="overflow-x-auto" style="width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch;"><table class="w-full text-sm"><thead class="text-gray-500 border-b"><tr><th class="text-left p-3">项目ID</th><th class="text-left p-3">项目名</th><th class="text-left p-3">访问密钥</th><th class="text-left p-3">文件数</th><th class="text-left p-3">大小</th><th class="text-left p-3">创建时间</th><th class="text-left p-3">操作</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="w-full text-sm"><thead class="text-gray-500 border-b"><tr><th class="text-left p-3">项目ID</th><th class="text-left p-3">项目名</th><th class="text-left p-3">访问密钥</th><th class="text-left p-3">文件数</th><th class="text-left p-3">大小</th><th class="text-left p-3">创建时间</th><th class="text-left p-3">操作</th></tr></thead><tbody>
     <?php foreach ($guestProjects as $pro): ?>
     <tr class="border-t"><td class="p-3 font-mono text-xs"><?= htmlspecialchars($pro['pro_id']) ?></td><td class="p-3"><?= htmlspecialchars($pro['name']) ?></td><td class="p-3 font-mono text-xs text-gray-400"><?= htmlspecialchars(substr($pro['access_key'], 0, 16)) ?>...</td><td class="p-3"><?= $pro['file_count'] ?></td><td class="p-3"><?= round($pro['total_size']/1024, 1) ?> KB</td><td class="p-3"><?= date('Y-m-d', $pro['created_at']) ?></td>
     <td class="p-3 space-x-2">
@@ -258,3 +145,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </main>
 </body></html>
+

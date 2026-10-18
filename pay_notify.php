@@ -28,11 +28,17 @@ if (empty($outTradeNo)) {
     exit;
 }
 
-// 处理支付成功的订单
-$result = processPaidOrder($outTradeNo, $tradeNo);
+// 处理支付成功的订单（根据订单类型分流）
+$orderInfo = getOrderByOutTradeNo($outTradeNo);
+if ($orderInfo && ($orderInfo['order_type'] ?? 'group') == 'balance') {
+    $result = processBalanceRecharge($outTradeNo, $tradeNo);
+} else {
+    $result = processPaidOrder($outTradeNo, $tradeNo);
+}
 
 if ($result) {
     echo 'success';
 } else {
     echo 'fail';
 }
+

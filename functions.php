@@ -1002,11 +1002,11 @@ function generateOrderNo() {
     return date('YmdHis') . rand(1000, 9999);
 }
 
-function createOrder($userId, $groupId, $money, $type = null) {
+function createOrder($userId, $groupId, $money, $type = null, $orderType = 'group') {
     $pdo = getDB();
     $outTradeNo = generateOrderNo();
-    $stmt = $pdo->prepare("INSERT INTO orders (user_id, group_id, out_trade_no, money, type, status, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)");
-    $stmt->execute([$userId, $groupId, $outTradeNo, $money, $type, time()]);
+    $stmt = $pdo->prepare("INSERT INTO orders (user_id, group_id, out_trade_no, money, type, order_type, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
+    $stmt->execute([$userId, $groupId, $outTradeNo, $money, $type, $orderType, time()]);
     return $outTradeNo;
 }
 
@@ -1046,12 +1046,23 @@ function processPaidOrder($outTradeNo, $tradeNo) {
     $stmt = $pdo->prepare("UPDATE orders SET status = 1, trade_no = ?, paid_at = ? WHERE out_trade_no = ?");
     $stmt->execute([$tradeNo, time(), $outTradeNo]);
     
-    // 更新用户组
+    // 更新用户组（支持续费：同组且未过期则在原到期时间上叠加）
     $group = getUserGroup($order['group_id']);
     if ($group) {
         $expireAt = null;
         if ($group['duration'] > 0) {
-            $expireAt = time() + ($group['duration'] * 86400);
+            // 检查是否续费：用户当前组就是该组，且未过期
+            $userStmt = $pdo->prepare("SELECT group_id, group_expire_at FROM users WHERE id = ?");
+            $userStmt->execute([$order['user_id']]);
+            $curUser = $userStmt->fetch();
+            $isRenew = ($curUser && $curUser['group_id'] == $order['group_id'] && $curUser['group_expire_at'] && $curUser['group_expire_at'] > time());
+            if ($isRenew) {
+                // 续费：在现有到期时间上叠加
+                $expireAt = $curUser['group_expire_at'] + ($group['duration'] * 86400);
+            } else {
+                // 新购买/升级：从现在开始算
+                $expireAt = time() + ($group['duration'] * 86400);
+            }
         }
         $stmt = $pdo->prepare("UPDATE users SET group_id = ?, group_expire_at = ? WHERE id = ?");
         $stmt->execute([$order['group_id'], $expireAt, $order['user_id']]);
@@ -1086,12 +1097,41 @@ function getPublicGroups() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function getUserOrders($userId, $limit = 20) {
+function getUserOrders($userId, $page = 1, $perPage = 20) {
     $pdo = getDB();
-    $limit = intval($limit);
-    $stmt = $pdo->prepare("SELECT o.*, g.name as group_name FROM orders o LEFT JOIN user_groups g ON o.group_id = g.id WHERE o.user_id = ? ORDER BY o.id DESC LIMIT $limit");
+    $page = max(1, intval($page));
+    $perPage = max(1, intval($perPage));
+    $offset = ($page - 1) * $perPage;
+    $stmt = $pdo->prepare("SELECT o.*, g.name as group_name FROM orders o LEFT JOIN user_groups g ON o.group_id = g.id WHERE o.user_id = ? ORDER BY o.id DESC LIMIT $perPage OFFSET $offset");
     $stmt->execute([$userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getUserOrderCount($userId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    return $stmt->fetchColumn();
+}
+
+function getAllOrders($page = 1, $perPage = 20) {
+    $pdo = getDB();
+    $page = max(1, intval($page));
+    $perPage = max(1, intval($perPage));
+    $offset = ($page - 1) * $perPage;
+    $stmt = $pdo->prepare("SELECT o.*, g.name as group_name, u.username as user_name FROM orders o LEFT JOIN user_groups g ON o.group_id = g.id LEFT JOIN users u ON o.user_id = u.id ORDER BY o.id DESC LIMIT $perPage OFFSET $offset");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getAllOrderCount() {
+    $pdo = getDB();
+    return $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+}
+
+function getPayMethodName($type) {
+    $map = ['alipay' => '支付宝', 'wxpay' => '微信支付', 'qqpay' => 'QQ钱包'];
+    return $map[$type] ?? $type;
 }
 
 // ============================================================
@@ -1556,8 +1596,9 @@ function geetest_v4_validate($lot_number, $captcha_output, $pass_token, $gen_tim
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $resp = curl_exec($ch);
+    $curl_err = curl_error($ch);
     curl_close($ch);
-    $result = json_decode($resp, true);
+        $result = json_decode($resp, true);
     return isset($result['result']) && $result['result'] === 'success';
 }
 
@@ -1610,13 +1651,16 @@ function geetest_v3_register() {
 function geetest_verify() {
     if (!geetest_enabled()) return true;
     $version = geetest_version();
-    if ($version === 'v4') {
+                        if ($version === 'v4') {
         $lot = $_POST['geetest_lot_number'] ?? '';
         $out = $_POST['geetest_captcha_output'] ?? '';
         $pass = $_POST['geetest_pass_token'] ?? '';
         $gen = $_POST['geetest_gen_time'] ?? '';
-        if (!$lot || !$out || !$pass || !$gen) return false;
-        return geetest_v4_validate($lot, $out, $pass, $gen);
+        if (!$lot || !$out || !$pass || !$gen) {
+                        return false;
+        }
+        $vr = geetest_v4_validate($lot, $out, $pass, $gen);
+                return $vr;
     } else {
         $challenge = $_POST['geetest_challenge'] ?? '';
         $validate = $_POST['geetest_validate'] ?? '';
@@ -1653,7 +1697,7 @@ function geetest_init_js($forms = []) {
     $formsJson = json_encode($forms, JSON_UNESCAPED_UNICODE);
     $js = '';
     if ($version === 'v4') {
-        $js .= '<script src="assets/gt4.js?v=242"></script>';
+        $js .= '<script src="https://static.geetest.com/v4/gt4.js"></script>';
         $js .= '<script>
         (function(){
             var forms = ' . $formsJson . ';
@@ -1694,7 +1738,7 @@ function geetest_init_js($forms = []) {
         })();
         </script>';
     } else {
-        $js .= '<script src="https://static.geetest.com/static/tools/gt.js"></script>';
+        $js .= '<script src="assets/gt3.js?v=1"></script>';
         $js .= '<script>
         (function(){
             var forms = ' . $formsJson . ';
@@ -2006,4 +2050,350 @@ function doUpgrade($targetVersion, $downloadUrl, $checksum = '') {
     $log[] = '临时文件已清理';
     $log[] = '升级完成！';
     return ['success' => true, 'log' => $log, 'version' => $targetVersion, 'backup_files' => $fileBackup['file'], 'backup_db' => $dbBackup['file']];
+}
+
+// === 首页模板系统 ===
+function getHomeTemplate() {
+    return getConfig('home_template') ?: 'default';
+}
+
+function listTemplates() {
+    $dir = __DIR__ . '/templates';
+    $templates = [];
+    if (!is_dir($dir)) return $templates;
+    $files = scandir($dir);
+    foreach ($files as $f) {
+        if ($f === '.' || $f === '..') continue;
+        $tplDir = $dir . '/' . $f;
+        if (!is_dir($tplDir)) continue;
+        $infoFile = $tplDir . '/info.json';
+        $indexFile = $tplDir . '/index.php';
+        if (!file_exists($indexFile)) continue;
+        $info = ['name' => $f, 'author' => '', 'website' => '', 'version' => '1.0', 'description' => '', 'preview' => ''];
+        if (file_exists($infoFile)) {
+            $json = json_decode(file_get_contents($infoFile), true);
+            if (is_array($json)) $info = array_merge($info, $json);
+        }
+        $info['dir'] = $f;
+        $info['active'] = (getHomeTemplate() === $f);
+        $templates[] = $info;
+    }
+    return $templates;
+}
+
+function renderHomeTemplate() {
+    $tpl = getHomeTemplate();
+    $tplFile = __DIR__ . '/templates/' . $tpl . '/index.php';
+    if (!file_exists($tplFile)) {
+        $tplFile = __DIR__ . '/templates/default/index.php';
+    }
+    define('IN_SITE', true);
+    include $tplFile;
+}
+
+
+// === 公告功能 ===
+function getAnnouncements($limit = 0) {
+    $pdo = getDB();
+    $sql = "SELECT * FROM announcements ORDER BY is_pinned DESC, created_at DESC";
+    if ($limit > 0) $sql .= " LIMIT " . intval($limit);
+    $stmt = $pdo->query($sql);
+    return $stmt->fetchAll();
+}
+
+function getAnnouncement($id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM announcements WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+// === 余额功能 ===
+function getUserBalance($userId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT balance FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch();
+    return floatval($row['balance'] ?? 0);
+}
+
+function recordBalanceLog($userId, $amount, $type, $remark = '') {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("INSERT INTO balance_logs (user_id, amount, type, remark, created_at) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$userId, $amount, $type, $remark, time()]);
+}
+
+function addBalance($userId, $amount, $remark = '') {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
+    $stmt->execute([$amount, $userId]);
+    recordBalanceLog($userId, $amount, 'recharge', $remark);
+    return true;
+}
+
+function deductBalance($userId, $amount, $remark = '') {
+    $pdo = getDB();
+    $balance = getUserBalance($userId);
+    if ($balance < $amount) return false;
+    $stmt = $pdo->prepare("UPDATE users SET balance = balance - ? WHERE id = ?");
+    $stmt->execute([$amount, $userId]);
+    recordBalanceLog($userId, -$amount, 'consume', $remark);
+    return true;
+}
+
+function adjustBalance($userId, $amount, $remark = '') {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("UPDATE users SET balance = ? WHERE id = ?");
+    $stmt->execute([$amount, $userId]);
+    recordBalanceLog($userId, $amount, 'adjust', $remark);
+    return true;
+}
+
+function getBalanceLogs($userId, $limit = 20) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM balance_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT " . intval($limit));
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll();
+}
+
+// === 邮箱通知 ===
+function getAllUserEmails() {
+    $pdo = getDB();
+    $stmt = $pdo->query("SELECT email, username FROM users WHERE email IS NOT NULL AND email != ''");
+    return $stmt->fetchAll();
+}
+
+// === 后台登录辅助 ===
+function isAdminLoggedIn() {
+    return isset($_SESSION['admin_id']);
+}
+
+function getAdminUser() {
+    if (!isset($_SESSION['admin_id'])) return null;
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE id = ?");
+    $stmt->execute([$_SESSION['admin_id']]);
+    return $stmt->fetch();
+}
+
+function setConfig($key, $value) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("INSERT INTO site_config (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = ?");
+    $stmt->execute([$key, $value, $value]);
+}
+
+
+
+
+
+// === 订单状态手动变更 ===
+function updateOrderStatus($orderId, $newStatus) {
+    $pdo = getDB();
+    $order = getOrderById($orderId);
+    if (!$order) return ['success' => false, 'msg' => '订单不存在'];
+    if ($order['status'] == $newStatus) return ['success' => false, 'msg' => '状态未变更'];
+
+    $group = getUserGroup($order['group_id']);
+    // 获取用户当前组信息
+    $userStmt = $pdo->prepare("SELECT group_id, group_expire_at FROM users WHERE id = ?");
+    $userStmt->execute([$order['user_id']]);
+    $curUser = $userStmt->fetch();
+
+    if ($newStatus == 1) {
+        // 标记已支付 -> 开通会员（支持续费叠加）
+        $stmt = $pdo->prepare("UPDATE orders SET status = 1, paid_at = ? WHERE id = ?");
+        $stmt->execute([time(), $orderId]);
+        if ($group) {
+            $expireAt = null;
+            if ($group['duration'] > 0) {
+                $isRenew = ($curUser && $curUser['group_id'] == $order['group_id'] && $curUser['group_expire_at'] && $curUser['group_expire_at'] > time());
+                if ($isRenew) {
+                    $expireAt = $curUser['group_expire_at'] + ($group['duration'] * 86400);
+                    $msg = '已标记为已支付，续费成功，有效期延长' . $group['duration'] . '天';
+                } else {
+                    $expireAt = time() + ($group['duration'] * 86400);
+                    $msg = '已标记为已支付，会员已开通';
+                }
+            } else {
+                $msg = '已标记为已支付，永久会员已开通';
+            }
+            $pdo->prepare("UPDATE users SET group_id = ?, group_expire_at = ? WHERE id = ?")->execute([$order['group_id'], $expireAt, $order['user_id']]);
+            $pdo->prepare("UPDATE orders SET expire_at = ? WHERE id = ?")->execute([$expireAt, $orderId]);
+        } else {
+            $msg = '已标记为已支付';
+        }
+        return ['success' => true, 'msg' => $msg];
+    } else {
+        // 标记未支付 -> 扣除对应时长
+        $stmt = $pdo->prepare("UPDATE orders SET status = 0, paid_at = NULL, expire_at = NULL WHERE id = ?");
+        $stmt->execute([$orderId]);
+        if ($group && $group['duration'] > 0 && $curUser && $curUser['group_id'] == $order['group_id'] && $curUser['group_expire_at']) {
+            // 同组且有到期时间：扣除duration天
+            $newExpire = $curUser['group_expire_at'] - ($group['duration'] * 86400);
+            if ($newExpire > time()) {
+                $pdo->prepare("UPDATE users SET group_expire_at = ? WHERE id = ?")->execute([$newExpire, $order['user_id']]);
+                $msg = '已标记为未支付，扣除' . $group['duration'] . '天有效期';
+            } else {
+                // 扣除后已过期，移回免费组
+                $defaultGroup = getDefaultUserGroup();
+                $defaultId = $defaultGroup ? $defaultGroup['id'] : 1;
+                $pdo->prepare("UPDATE users SET group_id = ?, group_expire_at = NULL WHERE id = ?")->execute([$defaultId, $order['user_id']]);
+                $msg = '已标记为未支付，扣除后会员已过期，已降为免费组';
+            }
+        } elseif ($group && $group['duration'] == 0 && $curUser && $curUser['group_id'] == $order['group_id']) {
+            // 永久组：直接移回免费组
+            $defaultGroup = getDefaultUserGroup();
+            $defaultId = $defaultGroup ? $defaultGroup['id'] : 1;
+            $pdo->prepare("UPDATE users SET group_id = ?, group_expire_at = NULL WHERE id = ?")->execute([$defaultId, $order['user_id']]);
+            $msg = '已标记为未支付，永久会员已取消';
+        } else {
+            $msg = '已标记为未支付';
+        }
+        return ['success' => true, 'msg' => $msg];
+    }
+}
+
+function getOrderById($orderId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
+    $stmt->execute([$orderId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+
+
+
+// === 余额充值 ===
+function createBalanceOrder($userId, $money, $type = null) {
+    return createOrder($userId, 0, $money, $type, 'balance');
+}
+
+function processBalanceRecharge($outTradeNo, $tradeNo) {
+    $pdo = getDB();
+    $order = getOrderByOutTradeNo($outTradeNo);
+    if (!$order || $order['status'] == 1) return false;
+    $stmt = $pdo->prepare("UPDATE orders SET status = 1, trade_no = ?, paid_at = ? WHERE out_trade_no = ?");
+    $stmt->execute([$tradeNo, time(), $outTradeNo]);
+    addBalance($order['user_id'], $order['money'], '余额充值');
+    return true;
+}
+
+// === 退款配置 ===
+function getRefundConfig() {
+    return [
+        'min_recharge' => floatval(getConfig()['min_recharge_amount'] ?? 1),
+        'balance_fee' => floatval(getConfig()['refund_fee_balance'] ?? 3),
+        'tier1_days' => intval(getConfig()['refund_tier_1_days'] ?? 3),
+        'tier1_rate' => floatval(getConfig()['refund_tier_1_rate'] ?? 0),
+        'tier2_days' => intval(getConfig()['refund_tier_2_days'] ?? 7),
+        'tier2_rate' => floatval(getConfig()['refund_tier_2_rate'] ?? 25),
+        'tier3_days' => intval(getConfig()['refund_tier_3_days'] ?? 15),
+        'tier3_rate' => floatval(getConfig()['refund_tier_3_rate'] ?? 50),
+        'tier4_rate' => floatval(getConfig()['refund_tier_4_rate'] ?? 70),
+    ];
+}
+
+// 计算退款金额
+function calculateRefundAmount($order) {
+    $cfg = getRefundConfig();
+    $money = floatval($order['money']);
+    if ($order['order_type'] == 'balance') {
+        // 余额退款扣3%手续费
+        $fee = $money * ($cfg['balance_fee'] / 100);
+        return ['original' => $money, 'fee' => round($fee, 2), 'refund' => round($money - $fee, 2), 'reason' => '余额充值扣除' . $cfg['balance_fee'] . '%手续费'];
+    }
+    // 会员退款按使用时间阶梯
+    $paidAt = $order['paid_at'] ?: time();
+    $usedDays = floor((time() - $paidAt) / 86400);
+    if ($usedDays <= $cfg['tier1_days']) {
+        $rate = $cfg['tier1_rate'];
+        $reason = "使用{$usedDays}天（≤{$cfg['tier1_days']}天），不扣费";
+    } elseif ($usedDays <= $cfg['tier2_days']) {
+        $rate = $cfg['tier2_rate'];
+        $reason = "使用{$usedDays}天（{$cfg['tier1_days']}-{$cfg['tier2_days']}天），扣{$rate}%";
+    } elseif ($usedDays <= $cfg['tier3_days']) {
+        $rate = $cfg['tier3_rate'];
+        $reason = "使用{$usedDays}天（{$cfg['tier2_days']}-{$cfg['tier3_days']}天），扣{$rate}%";
+    } else {
+        $rate = $cfg['tier4_rate'];
+        $reason = "使用{$usedDays}天（>{$cfg['tier3_days']}天），扣{$rate}%";
+    }
+    $fee = $money * ($rate / 100);
+    return ['original' => $money, 'fee' => round($fee, 2), 'refund' => round($money - $fee, 2), 'reason' => $reason, 'used_days' => $usedDays];
+}
+
+// 申请退款
+function applyRefund($orderId, $userId, $method, $account, $realName, $reason = '') {
+    $pdo = getDB();
+    $order = getOrderById($orderId);
+    if (!$order || $order['user_id'] != $userId) return ['success' => false, 'msg' => '订单不存在'];
+    if ($order['status'] != 1) return ['success' => false, 'msg' => '订单未支付，无法退款'];
+    // 检查是否已有待处理退款
+    $stmt = $pdo->prepare("SELECT id FROM refund_applications WHERE order_id = ? AND status = 0");
+    $stmt->execute([$orderId]);
+    if ($stmt->fetch()) return ['success' => false, 'msg' => '该订单已有待处理的退款申请'];
+    $calc = calculateRefundAmount($order);
+    $stmt = $pdo->prepare("INSERT INTO refund_applications (order_id, user_id, order_type, refund_amount, actual_refund, refund_method, refund_account, real_name, reason, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,0,?)");
+    $stmt->execute([$orderId, $userId, $order['order_type'], $calc['original'], $calc['refund'], $method, $account, $realName, $reason . ' | ' . $calc['reason'], time()]);
+    return ['success' => true, 'msg' => '退款申请已提交，预计退款¥' . $calc['refund']];
+}
+
+function getUserRefunds($userId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT r.*, o.out_trade_no, o.money as order_money, o.order_type as o_type FROM refund_applications r LEFT JOIN orders o ON r.order_id = o.id WHERE r.user_id = ? ORDER BY r.id DESC");
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getAllRefunds($status = null) {
+    $pdo = getDB();
+    $sql = "SELECT r.*, o.out_trade_no, o.money as order_money, u.username FROM refund_applications r LEFT JOIN orders o ON r.order_id = o.id LEFT JOIN users u ON r.user_id = u.id";
+    if ($status !== null) $sql .= " WHERE r.status = " . intval($status);
+    $sql .= " ORDER BY r.id DESC";
+    return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getRefundById($id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM refund_applications WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// 后台处理退款
+function processRefund($refundId, $action, $adminRemark = '') {
+    $pdo = getDB();
+    $refund = getRefundById($refundId);
+    if (!$refund || $refund['status'] != 0) return ['success' => false, 'msg' => '退款申请不存在或已处理'];
+    if ($action == 'approve') {
+        // 同意退款：扣余额/取消会员，标记退款
+        $order = getOrderById($refund['order_id']);
+        if ($order) {
+            if ($order['order_type'] == 'balance') {
+                deductBalance($refund['user_id'], $refund['actual_refund'], '退款扣除');
+            } else {
+                // 会员退款：取消会员
+                $defaultGroup = getDefaultUserGroup();
+                $defaultId = $defaultGroup ? $defaultGroup['id'] : 1;
+                $pdo->prepare("UPDATE users SET group_id = ?, group_expire_at = NULL WHERE id = ?")->execute([$defaultId, $refund['user_id']]);
+            }
+            // 订单标记为已退款（status=2）
+            $pdo->prepare("UPDATE orders SET status = 2 WHERE id = ?")->execute([$refund['order_id']]);
+        }
+        $pdo->prepare("UPDATE refund_applications SET status = 1, admin_remark = ?, processed_at = ? WHERE id = ?")->execute([$adminRemark, time(), $refundId]);
+        return ['success' => true, 'msg' => '退款已通过，¥' . $refund['actual_refund'] . '已退回'];
+    } else {
+        $pdo->prepare("UPDATE refund_applications SET status = 2, admin_remark = ?, processed_at = ? WHERE id = ?")->execute([$adminRemark, time(), $refundId]);
+        return ['success' => true, 'msg' => '退款申请已拒绝'];
+    }
+}
+
+
+function deleteRefund($refundId) {
+    $pdo = getDB();
+    $refund = getRefundById($refundId);
+    if (!$refund) return ['success' => false, 'msg' => '退款记录不存在'];
+    $stmt = $pdo->prepare("DELETE FROM refund_applications WHERE id = ?");
+    $stmt->execute([$refundId]);
+    return ['success' => true, 'msg' => '退款记录已删除'];
 }

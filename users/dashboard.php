@@ -1,188 +1,221 @@
-<?php require_once '../functions.php';
+<?php
+require_once '../functions.php';
 if (!isLoggedIn()) { header('Location: ../login.php'); exit; }
 $user = getCurrentUser();
 $projects = getUserProjects($user['id']);
 $stats = getUserStats($user['id']);
 $currentGroup = getUserGroup($user['group_id'] ?? 1);
+// 会员到期时间显示
+if ($currentGroup && ($currentGroup['duration'] ?? 0) == 0 && $user['group_id'] > 1) {
+    $expireDisplay = '永久有效';
+} elseif (!empty($user['group_expire_at'])) {
+    $expireDisplay = date('Y-m-d', $user['group_expire_at']);
+} else {
+    $expireDisplay = '免费用户';
+}
 $config = getConfig();
+
+// 获取最新登录IP
+$pdo = getDB();
+$stmt = $pdo->prepare("SELECT ip FROM login_logs WHERE user_id = ? AND status = 1 ORDER BY created_at DESC LIMIT 1");
+$stmt->execute([$user['id']]);
+$lastLogin = $stmt->fetch();
+$lastIp = $lastLogin['ip'] ?? '未知';
+
+// 计算剩余空间
+$totalQuota = $user['quota'] ?? 500;
+$usedSpace = $stats['total_size_mb'] ?? 0;
+$remainSpace = max(0, $totalQuota - $usedSpace);
+$projectLimit = getUserProjectLimit($user['id']);
+$balance = getUserBalance($user['id']);
+$announcements = getAnnouncements(5);
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title><script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="../style.css?v=245">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>控制台 - <?= htmlspecialchars($config['site_name']) ?></title>
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
 <style>
-/* 移动端顶部导航 - 内联防止CSS丢失 */
-.mobile-topbar {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 56px;
-    background: #fff;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    z-index: 999;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-}
-.mobile-topbar .mobile-logo {
-    display: flex; align-items: center; gap: 8px;
-    font-weight: 600; font-size: 15px;
-}
-.mobile-topbar .logo-icon {
-    width: 32px; height: 32px;
-    background: #2563eb;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 18px;
-}
-.hamburger-btn {
-    width: 40px; height: 40px;
-    background: #f3f4f6;
-    border: none; border-radius: 10px;
-    cursor: pointer;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 5px;
-    transition: all 0.3s ease;
-}
-.hamburger-btn span {
-    display: block;
-    width: 20px; height: 2px;
-    background: #333;
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.hamburger-btn.active span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-}
-.hamburger-btn.active span:nth-child(2) {
-    opacity: 0;
-    transform: scaleX(0);
-}
-.hamburger-btn.active span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-}
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 998;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.sidebar-overlay.show {
-    display: block;
-    opacity: 1;
-}
-@media (max-width: 768px) {
-    .mobile-topbar { display: flex; }
-    .sidebar {
-        position: fixed !important;
-        left: -280px !important;
-        top: 0; bottom: 0;
-        z-index: 1000 !important;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 280px !important;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.12);
-        padding-top: 70px !important;
-    }
-    .sidebar.show { left: 0 !important; }
-    main {
-        padding: 16px !important;
-        padding-top: 72px !important;
-        min-width: 0 !important;
-        overflow-x: hidden !important;
-    }
-    body { overflow-x: hidden !important; }
-    .overflow-x-auto {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        width: 100% !important;
-    }
-    .overflow-x-auto table {
-        min-width: 600px !important;
-        width: auto !important;
-    }
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f8;min-height:100vh;color:#1a1a2e;line-height:1.6}
+a{text-decoration:none;color:inherit}
+
+/* 顶部导航 */
+.topbar{position:sticky;top:0;z-index:100;background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.topbar .left{display:flex;align-items:center;gap:12px}
+.menu-btn{width:40px;height:40px;background:#f3f4f6;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:#374151}
+.page-title{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700}
+.page-title .home-icon{width:32px;height:32px;background:#3b82f6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.topbar .right{display:flex;align-items:center;gap:10px}
+.user-id{font-size:14px;font-weight:600;color:#374151}
+.avatar{width:36px;height:36px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:18px;cursor:pointer}
+
+/* 主内容 */
+.container{max-width:480px;margin:0 auto;padding:16px}
+
+/* 用户卡片 */
+.user-card{background:#fff;border-radius:16px;padding:24px 20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.user-info{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.user-avatar{width:64px;height:64px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:32px;flex-shrink:0}
+.user-meta h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.user-meta p{font-size:13px;color:#9ca3af}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-box{background:#f8fafc;border-radius:12px;padding:16px;text-align:center;border:1px solid #eef0f3}
+.stat-box .label{font-size:12px;color:#9ca3af;margin-bottom:6px}
+.stat-box .value{font-size:20px;font-weight:800;color:#1a1a2e}
+
+/* 快捷访问 */
+.quick-card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.card-title{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;margin-bottom:16px}
+.card-title i{color:#3b82f6;font-size:20px}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.quick-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border-radius:12px;transition:all .15s;cursor:pointer}
+.quick-item:active{background:#f3f4f6;transform:scale(.95)}
+.quick-icon{width:44px;height:44px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#3b82f6}
+.quick-label{font-size:12px;color:#374151;font-weight:500;text-align:center}
+
+/* 最近项目 */
+.project-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.project-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.view-all{font-size:13px;color:#3b82f6;font-weight:500;display:flex;align-items:center;gap:4px}
+.project-list{display:flex;flex-direction:column;gap:10px}
+.project-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid #eef0f3}
+.project-item .pname{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.project-item .pname .dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+.project-item .paction{font-size:13px;color:#3b82f6;font-weight:500}
+.empty-state{text-align:center;padding:32px 0;color:#9ca3af;font-size:14px}
+.empty-state i{font-size:40px;display:block;margin-bottom:8px;color:#d1d5db}
+
+/* 侧边栏遮罩 */
+.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:200}
+.sidebar-overlay.show{display:block}
+
+/* 侧边栏 */
+.sidebar{position:fixed;top:0;left:-280px;bottom:0;width:280px;background:#fff;z-index:300;transition:left .3s;display:flex;flex-direction:column;padding-top:20px}
+.sidebar.show{left:0}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 20px 20px;border-bottom:1px solid #eef0f3;margin-bottom:12px}
+.sidebar .logo{width:36px;height:36px;background:#3b82f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.sidebar .name{font-weight:700;font-size:14px}
+.sidebar .sub{font-size:11px;color:#9ca3af}
+.sidebar nav{flex:1;padding:8px 0}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:12px 20px;color:#4b5563;font-size:14px;transition:all .15s}
+.sidebar nav a:hover{background:#f3f4f6}
+.sidebar nav a.active{background:#eff6ff;color:#3b82f6;font-weight:600}
+.sidebar .footer{padding:12px 20px;border-top:1px solid #eef0f3}
+.sidebar .footer a{display:flex;align-items:center;gap:8px;color:#dc2626;font-size:14px;padding:8px 0}
+
+.hamburger-btn{width:40px;height:40px;background:#f3f4f6;border:none;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.hamburger-btn span{display:block;width:20px;height:2px;background:#333;border-radius:2px}
 </style>
 </head>
-<body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo">
-        <div class="logo-icon"><i class="ri-cloud-line"></i></div>
-        <span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span>
-    </div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单">
-        <span></span><span></span><span></span>
-    </button>
+<body>
+
+<!-- 顶部导航 -->
+<div class="topbar">
+<div class="left">
+<button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+<div class="page-title"><div class="home-icon"><i class="ri-home-line"></i></div>控制台</div>
 </div>
+<div class="right">
+<span class="user-id"><?= htmlspecialchars($user['username']) ?></span>
+<a href="profile.php"><div class="avatar"><i class="ri-user-line"></i></div></a>
+</div>
+</div>
+
+<!-- 侧边栏 -->
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<?php include 'sidebar.php'; ?>
+
+<div class="container">
+<!-- 用户信息卡片 -->
+<div class="user-card">
+<div class="user-info">
+<div class="user-avatar"><i class="ri-user-line"></i></div>
+<div class="user-meta">
+<h2><?= htmlspecialchars($user['username']) ?></h2>
+<p>ID: <?= intval($user['id']) ?> · <?= htmlspecialchars($user['email']) ?></p>
+<p style="font-size:12px;color:#9ca3af;margin-top:2px">登录IP: <?= htmlspecialchars($lastIp) ?></p>
+</div>
+</div>
+<div class="stats-grid">
+<div class="stat-box"><div class="label">已用空间</div><div class="value"><?= intval($usedSpace) ?> MB</div></div>
+<div class="stat-box"><div class="label">会员到期</div><div class="value" style="font-size:15px;"><?= htmlspecialchars($expireDisplay) ?></div></div>
+<div class="stat-box"><div class="label">当前套餐</div><div class="value" style="font-size:16px"><?= htmlspecialchars($currentGroup['name'] ?? '免费用户') ?></div></div>
+<div class="stat-box"><div class="label">账户余额</div><div class="value">¥<?= number_format($balance, 2) ?></div></div>
+</div>
+</div>
+
+<!-- 快捷访问 -->
+<div class="quick-card">
+<div class="card-title"><i class="ri-lightbulb-flash-line"></i>快捷访问</div>
+<div class="quick-grid">
+<a href="projects.php" class="quick-item"><div class="quick-icon"><i class="ri-folder-line"></i></div><span class="quick-label">我的项目</span></a>
+<a href="templates.php" class="quick-item"><div class="quick-icon"><i class="ri-apps-line"></i></div><span class="quick-label">模板市场</span></a>
+<a href="buy_group.php" class="quick-item"><div class="quick-icon"><i class="ri-shopping-bag-line"></i></div><span class="quick-label">购买套餐</span></a>
+<a href="profile.php" class="quick-item"><div class="quick-icon"><i class="ri-user-line"></i></div><span class="quick-label">个人中心</span></a>
+<a href="login_logs.php" class="quick-item"><div class="quick-icon"><i class="ri-history-line"></i></div><span class="quick-label">登录日志</span></a>
+</div>
+</div>
+
+<!-- 系统公告 -->
+<div class="project-card" style="margin-bottom:16px">
+<div class="project-header">
+<div class="card-title" style="margin-bottom:0"><i class="ri-megaphone-line"></i>系统公告</div>
+</div>
+<?php if (empty($announcements)): ?>
+<div class="empty-state"><i class="ri-information-line"></i>暂无公告</div>
+<?php else: ?>
+<div class="project-list">
+<?php foreach ($announcements as $ann): ?>
+<div class="project-item">
+<div class="pname"><?php if ($ann['is_pinned']): ?><span style="background:#fef3c7;color:#d97706;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;margin-right:6px">置顶</span><?php endif; ?><?= htmlspecialchars($ann['title']) ?></div>
+<span style="font-size:11px;color:#9ca3af;flex-shrink:0"><?= date('m-d', $ann['created_at']) ?></span>
+</div>
+<?php endforeach; ?>
+</div>
+<?php endif; ?>
+</div>
+
+<!-- 最近项目 -->
+<div class="project-card">
+<div class="project-header">
+<div class="card-title" style="margin-bottom:0"><i class="ri-folder-line"></i>最近项目</div>
+<a href="projects.php" class="view-all">查看全部 <i class="ri-arrow-right-s-line"></i></a>
+</div>
+<?php if (empty($projects)): ?>
+<div class="empty-state"><i class="ri-folder-open-line"></i>暂无项目，去创建一个吧</div>
+<?php else: ?>
+<div class="project-list">
+<?php foreach (array_slice($projects, 0, 5) as $pro): ?>
+<div class="project-item">
+<div class="pname"><span class="dot"></span><?= htmlspecialchars($pro['name']) ?></div>
+<a href="project_detail.php?pro=<?= htmlspecialchars($pro['pro_id']) ?>" class="paction">管理</a>
+</div>
+<?php endforeach; ?>
+</div>
+<?php endif; ?>
+</div>
+</div>
+
 <script>
-function toggleSidebar(btn) {
+function toggleSidebar(){
     document.querySelector('.sidebar').classList.toggle('show');
     document.querySelector('.sidebar-overlay').classList.toggle('show');
-    if (btn) btn.classList.toggle('active');
-    else document.querySelector('.hamburger-btn').classList.toggle('active');
 }
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.sidebar a').forEach(function(a) {
-        a.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.remove('show');
-            document.querySelector('.sidebar-overlay').classList.remove('show');
-            document.querySelector('.hamburger-btn').classList.remove('active');
-        });
+document.querySelectorAll('.sidebar nav a').forEach(function(a){
+    a.addEventListener('click', function(){
+        document.querySelector('.sidebar').classList.remove('show');
+        document.querySelector('.sidebar-overlay').classList.remove('show');
     });
 });
 </script>
-
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
-        </div>
-        <nav>
-            <a href="dashboard.php" class="active"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php"><i class="ri-user-line"></i> 个人中心</a>
-            </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
-<main class="flex-1 p-6">
-    <div class="page-header">
-    <div class="card" style="flex:1;">
-        <h1 style="font-size:22px;font-weight:700;color:var(--text-1);margin-bottom:8px;">欢迎回来，<?= htmlspecialchars($user['username']) ?></h1>
-        <p style="color:var(--text-3);font-size:14px;margin-bottom:4px;">
-            当前用户组：<span style="color:var(--primary);font-weight:500;"><?= htmlspecialchars($currentGroup['name'] ?? '免费用户') ?></span>
-            <?php if (!empty($user['group_expire_at'])): ?>（到期：<?= date('Y-m-d', $user['group_expire_at']) ?>）<?php endif; ?>
-            <a href="buy_group.php" style="margin-left:8px;">升级</a>
-        </p>
-        <p style="color:var(--text-4);font-size:13px;"><?= htmlspecialchars($config['tagline']) ?></p>
-    </div>
-    <?php if (canCreateProject($user['id'])): ?>
-    <button onclick="newProject()" class="btn-primary" style="align-self:flex-start;"><i class="ri-add-line"></i> 新建项目</button>
-    <?php else: ?>
-    <button onclick="alert('项目数量已达上限（<?= getUserProjectLimit($user['id']) ?>个），请升级用户组或删除旧项目')" class="btn-secondary" style="align-self:flex-start;"><i class="ri-lock-line"></i> 已达上限</button>
-    <?php endif; ?>
-</div>
-    <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="ri-folder-line"></i></div><div class="stat-value"><?= $stats['project_count'] ?>/<?= getUserProjectLimit($user['id']) ?></div><div class="stat-label">我的项目</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="ri-hard-drive-2-line"></i></div><div class="stat-value"><?= $stats['total_size_mb'] ?> MB</div><div class="stat-label">已用空间</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="ri-database-line"></i></div><div class="stat-value">500 MB</div><div class="stat-label">总配额</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#fce7f3;color:#db2777;"><i class="ri-pie-chart-line"></i></div><div class="stat-value"><?= round(($stats['total_size_mb'] / 500) * 100, 1) ?>%</div><div class="stat-label">使用率</div></div>
-</div>
-    <div class="card mb-6"><h3 class="font-medium mb-4">空间使用趋势（近7日）</h3><canvas id="usageChart" height="120"></canvas></div>
-    <div class="card"><div class="flex justify-between items-center mb-4"><h3 class="font-medium">最近项目</h3><a href="projects.php" class="text-blue-600 text-sm">查看全部</a></div><?php if (empty($projects)): ?><div class="text-center py-8 text-gray-500">暂无项目，点击右上角创建</div><?php else: ?><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><?php foreach (array_slice($projects, 0, 3) as $pro): ?><div class="card" style="padding:16px;"><div class="font-bold"><?= htmlspecialchars($pro['name']) ?></div><div class="flex justify-between items-center mt-3"><span class="text-xs text-green-600 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-lg"></span> 在线</span><a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="text-blue-600 text-sm">管理文件</a></div></div><?php endforeach; ?></div><?php endif; ?></div>
-</main>
-<script>
-    new Chart(document.getElementById('usageChart'), { type: 'line', data: { labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'], datasets: [{ label: '空间使用 (MB)', data: [20, 25, 22, 32, 28, 35, 30], borderColor: '#2563eb', backgroundColor: 'rgba(22,119,255,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
-    function newProject() { let name = prompt("请输入项目名（仅英文数字）", ""); if (name && /^[a-zA-Z0-9]+$/.test(name)) location.href = "project_new.php?name=" + encodeURIComponent(name); else alert("项目名只能包含英文数字"); }
-</script>
 </body>
 </html>
+
+
+
+
+
+

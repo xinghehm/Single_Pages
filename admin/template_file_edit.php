@@ -37,16 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>编辑文件 - <?= htmlspecialchars($tpl['name']) ?> - <?= htmlspecialchars($config['site_name']) ?></title>
-<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="../style.css?v=245">
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name']) ?></span></div>
-    <button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name']) ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>function toggleSidebar(){document.querySelector('.sidebar').classList.toggle('show');document.querySelector('.sidebar-overlay').classList.toggle('show');}</script>
 <?php include 'sidebar.php'; ?>
 
 <main>
@@ -77,3 +73,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </main>
 </body>
 </html>
+

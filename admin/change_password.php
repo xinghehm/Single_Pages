@@ -51,7 +51,7 @@ $config = getConfig();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>修改密码 - <?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="../style.css?v=245">
 <style>
 /* 移动端顶部导航 - 内联防止CSS丢失 */
@@ -151,34 +151,8 @@ $config = getConfig();
 </style>
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo">
-        <div class="logo-icon"><i class="ri-cloud-line"></i></div>
-        <span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span>
-    </div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单">
-        <span></span><span></span><span></span>
-    </button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>
-function toggleSidebar(btn) {
-    document.querySelector('.sidebar').classList.toggle('show');
-    document.querySelector('.sidebar-overlay').classList.toggle('show');
-    if (btn) btn.classList.toggle('active');
-    else document.querySelector('.hamburger-btn').classList.toggle('active');
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.sidebar a').forEach(function(a) {
-        a.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.remove('show');
-            document.querySelector('.sidebar-overlay').classList.remove('show');
-            document.querySelector('.hamburger-btn').classList.remove('active');
-        });
-    });
-});
-</script>
-
 <aside class="sidebar">
     <div>
         <div class="brand">

@@ -132,7 +132,7 @@ $config = getConfig();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人中心 - <?= htmlspecialchars($config['site_name'] ?? '云上云诺') ?></title>
     
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="../style.css?v=245">
     <style>
         .info-row { margin-bottom: 12px; }
@@ -255,53 +255,9 @@ $config = getConfig();
 </style>
 </head>
 <body class="has-sidebar">
-<div class="mobile-topbar">
-    <div class="mobile-logo">
-        <div class="logo-icon"><i class="ri-cloud-line"></i></div>
-        <span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span>
-    </div>
-    <button class="hamburger-btn" onclick="toggleSidebar(this)" aria-label="菜单">
-        <span></span><span></span><span></span>
-    </button>
-</div>
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-cloud-line"></i></div><span><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></span></div></div>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<script>
-function toggleSidebar(btn) {
-    document.querySelector('.sidebar').classList.toggle('show');
-    document.querySelector('.sidebar-overlay').classList.toggle('show');
-    if (btn) btn.classList.toggle('active');
-    else document.querySelector('.hamburger-btn').classList.toggle('active');
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.sidebar a').forEach(function(a) {
-        a.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.remove('show');
-            document.querySelector('.sidebar-overlay').classList.remove('show');
-            document.querySelector('.hamburger-btn').classList.remove('active');
-        });
-    });
-});
-</script>
-
-<aside class="sidebar">
-    <div>
-        <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
-            <div><div class="name"><?= htmlspecialchars($config['site_name']) ?></div><div class="sub">Pages</div></div>
-        </div>
-        <nav>
-            <a href="dashboard.php"><i class="ri-dashboard-line"></i> 控制台</a>
-            <a href="templates.php"><i class="ri-apps-line"></i> 模板市场</a>
-            <a href="projects.php"><i class="ri-folder-line"></i> 我的项目</a>
-            <a href="login_logs.php"><i class="ri-history-line"></i> 登录日志</a>
-            <a href="buy_group.php"><i class="ri-vip-crown-line"></i> 购买用户组</a>
-            <a href="profile.php" class="active"><i class="ri-user-line"></i> 个人中心</a>
-            </nav>
-    </div>
-    <div class="sidebar-footer">
-        <a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a>
-    </div>
-</aside>
+<?php include 'sidebar.php'; ?>
 
 <main class="flex-1 p-6">
     <div class="glass-card max-w-2xl mx-auto p-6">
@@ -633,5 +589,19 @@ if (sendSmsBtn) {
     });
 }
 </script>
+<script>
+function toggleSidebar(){
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
