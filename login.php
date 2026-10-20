@@ -64,12 +64,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isLoginLocked($login)) {
             $remaining = getLoginLockRemaining($login);
             $error = '登录失败次数过多，请 ' . ceil($remaining / 60) . ' 分钟后再试';
-        } elseif (login($login, $password)) {
+        } elseif (($loginResult = login($login, $password)) === true) {
             $u = getCurrentUser();
             checkUserGroupExpire($u['id']);
             addLoginLog($u['id'], $login, true);
             clearLoginAttempts($login);
             header('Location: users/dashboard.php');
+            exit;
+        } elseif ($loginResult === 'banned') {
+            header('Location: appeal.php?banned=1');
             exit;
         } else {
             $error = '用户名/邮箱或密码错误';
@@ -260,4 +263,5 @@ document.querySelectorAll('form').forEach(function(f){
 </script>
 </body>
 </html>
+
 

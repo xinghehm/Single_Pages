@@ -125,6 +125,9 @@ function login($login, $password) {
     $stmt->execute([$login, $login]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user && password_verify($password, $user['password'])) {
+        if (!empty($user['banned'])) {
+            return 'banned';
+        }
         $_SESSION['user_id'] = $user['id'];
         return true;
     }
@@ -535,13 +538,19 @@ function deleteFile($proId, $filename) {
     $pdo = getDB();
     if ($pdo === null) return false;
     
+    // 安全过滤：防止路径遍历
+    $filename = basename($filename);
+    if (empty($filename) || $filename === '.' || $filename === '..') return false;
+    
     $stmt = $pdo->prepare("SELECT p.*, u.username FROM projects p JOIN users u ON p.user_id = u.id WHERE p.pro_id = ?");
     $stmt->execute([$proId]);
     $project = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($project) {
-        $filePath = __DIR__ . "/users/{$project['username']}/projects/$proId/" . $filename;
-        if (file_exists($filePath)) {
+        $baseDir = realpath(__DIR__ . "/users/{$project['username']}/projects/$proId");
+        $filePath = $baseDir . '/' . $filename;
+        // 确保文件在项目目录内
+        if ($baseDir && file_exists($filePath) && strpos(realpath($filePath), $baseDir) === 0) {
             unlink($filePath);
         }
     }
@@ -1129,6 +1138,18 @@ function getAllOrderCount() {
     return $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
 }
 
+function getEnabledPayMethods() {
+    $config = getConfig();
+    $methods = $config['yipay_pay_methods'] ?? 'alipay,wxpay';
+    $arr = array_filter(array_map('trim', explode(',', $methods)));
+    return array_values($arr);
+}
+function getUserByPhone($phone) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE phone = ?");
+    $stmt->execute([$phone]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
 function getPayMethodName($type) {
     $map = ['alipay' => '支付宝', 'wxpay' => '微信支付', 'qqpay' => 'QQ钱包'];
     return $map[$type] ?? $type;
@@ -2361,16 +2382,17 @@ function getRefundById($id) {
 }
 
 // 后台处理退款
-function processRefund($refundId, $action, $adminRemark = '') {
+function processRefund($refundId, $action, $adminRemark = '', $refundAmount = null) {
     $pdo = getDB();
     $refund = getRefundById($refundId);
     if (!$refund || $refund['status'] != 0) return ['success' => false, 'msg' => '退款申请不存在或已处理'];
+    if ($refundAmount === null) $refundAmount = $refund['actual_refund'] ?? $refund['refund_amount'];
     if ($action == 'approve') {
         // 同意退款：扣余额/取消会员，标记退款
         $order = getOrderById($refund['order_id']);
         if ($order) {
             if ($order['order_type'] == 'balance') {
-                deductBalance($refund['user_id'], $refund['actual_refund'], '退款扣除');
+                deductBalance($refund['user_id'], $refundAmount, '退款扣除');
             } else {
                 // 会员退款：取消会员
                 $defaultGroup = getDefaultUserGroup();
@@ -2381,7 +2403,7 @@ function processRefund($refundId, $action, $adminRemark = '') {
             $pdo->prepare("UPDATE orders SET status = 2 WHERE id = ?")->execute([$refund['order_id']]);
         }
         $pdo->prepare("UPDATE refund_applications SET status = 1, admin_remark = ?, processed_at = ? WHERE id = ?")->execute([$adminRemark, time(), $refundId]);
-        return ['success' => true, 'msg' => '退款已通过，¥' . $refund['actual_refund'] . '已退回'];
+        return ['success' => true, 'msg' => '退款已通过，¥' . $refundAmount . '已退回'];
     } else {
         $pdo->prepare("UPDATE refund_applications SET status = 2, admin_remark = ?, processed_at = ? WHERE id = ?")->execute([$adminRemark, time(), $refundId]);
         return ['success' => true, 'msg' => '退款申请已拒绝'];
@@ -2397,3 +2419,260 @@ function deleteRefund($refundId) {
     $stmt->execute([$refundId]);
     return ['success' => true, 'msg' => '退款记录已删除'];
 }
+
+
+
+// === 多管理员系统 ===
+function getAdminUsers() {
+    $pdo = getDB();
+    return $pdo->query("SELECT id, username, email, role, created_at FROM admin_users ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+}
+function getAdminById($id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+function isSuperAdmin() {
+    if (!isset($_SESSION['admin_id'])) return false;
+    $admin = getAdminById($_SESSION['admin_id']);
+    return $admin && ($admin['role'] ?? 'super') === 'super';
+}
+function getAdminPermissions() {
+    if (!isset($_SESSION['admin_id'])) return [];
+    $admin = getAdminById($_SESSION['admin_id']);
+    if (!$admin) return [];
+    if (($admin['role'] ?? 'super') === 'super') return ['*'];
+    $perms = $admin['permissions'] ?? '';
+    return $perms ? json_decode($perms, true) : [];
+}
+function hasAdminPermission($perm) {
+    $perms = getAdminPermissions();
+    if (in_array('*', $perms)) return true;
+    return in_array($perm, $perms);
+}
+function requireAdminPermission($perm) {
+    if (!hasAdminPermission($perm)) {
+        http_response_code(403);
+        die('无权限访问此页面');
+    }
+}
+function addAdmin($username, $password, $email = '', $role = 'sub', $permissions = '[]') {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = ?");
+    $stmt->execute([$username]);
+    if ($stmt->fetch()) return ['success' => false, 'msg' => '用户名已存在'];
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    $stmt = $pdo->prepare("INSERT INTO admin_users (username, email, password, role, permissions, created_at) VALUES (?,?,?,?,?,?)");
+    $stmt->execute([$username, $email, $hash, $role, $permissions, time()]);
+    return ['success' => true, 'msg' => '管理员已添加'];
+}
+function updateAdmin($id, $username, $email = '', $password = '', $role = 'sub', $permissions = null) {
+    $pdo = getDB();
+    if ($password) {
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        if ($permissions !== null) {
+            $stmt = $pdo->prepare("UPDATE admin_users SET username=?, email=?, password=?, role=?, permissions=? WHERE id=?");
+            $stmt->execute([$username, $email, $hash, $role, $permissions, $id]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE admin_users SET username=?, email=?, password=?, role=? WHERE id=?");
+            $stmt->execute([$username, $email, $hash, $role, $id]);
+        }
+    } else {
+        if ($permissions !== null) {
+            $stmt = $pdo->prepare("UPDATE admin_users SET username=?, email=?, role=?, permissions=? WHERE id=?");
+            $stmt->execute([$username, $email, $role, $permissions, $id]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE admin_users SET username=?, email=?, role=? WHERE id=?");
+            $stmt->execute([$username, $email, $role, $id]);
+        }
+    }
+    return ['success' => true, 'msg' => '管理员已更新'];
+}
+function deleteAdmin($id) {
+    $pdo = getDB();
+    if ($id == 1) return ['success' => false, 'msg' => '不能删除总管理员'];
+    if ($id == ($_SESSION['admin_id'] ?? 0)) return ['success' => false, 'msg' => '不能删除自己'];
+    $pdo->prepare("DELETE FROM admin_users WHERE id = ?")->execute([$id]);
+    return ['success' => true, 'msg' => '管理员已删除'];
+}
+
+// === 自定义项目后缀 ===
+function getProjectBySlug($slug) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM projects WHERE custom_slug = ?");
+    $stmt->execute([$slug]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+function checkSlugAvailable($slug, $excludeProjectId = 0) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT id FROM projects WHERE custom_slug = ? AND id != ?");
+    $stmt->execute([$slug, $excludeProjectId]);
+    return !$stmt->fetch();
+}
+function setProjectSlug($projectId, $slug) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("UPDATE projects SET custom_slug = ? WHERE id = ?");
+    $stmt->execute([$slug ?: null, $projectId]);
+    return true;
+}
+
+// === 封禁项目（文件系统操作） ===
+function getProjectDirPath($proId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT p.*, u.username FROM projects p LEFT JOIN users u ON p.user_id = u.id WHERE p.pro_id = ?");
+    $stmt->execute([$proId]);
+    $project = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$project) return null;
+    return __DIR__ . "/users/{$project['username']}/projects/$proId";
+}
+
+function banProject($projectId, $reason) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM projects WHERE id = ?");
+    $stmt->execute([$projectId]);
+    $project = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$project) return false;
+    $proId = $project['pro_id'];
+    $projectDir = getProjectDirPath($proId);
+    if (!$projectDir || !is_dir($projectDir)) return false;
+    $backupDir = dirname($projectDir) . "/.banned_$proId";
+    if (is_dir($backupDir)) {
+        $it = new RecursiveDirectoryIterator($backupDir, RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($files as $file) { $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath()); }
+        rmdir($backupDir);
+    }
+    rename($projectDir, $backupDir);
+    mkdir($projectDir, 0755, true);
+    $banHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>项目已被禁止访问</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f3f4f6;font-family:sans-serif;}.box{text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:400px;margin:16px;}h1{font-size:22px;color:#1f2937;margin:0 0 8px;}p{color:#6b7280;font-size:14px;line-height:1.6;margin:0;}.reason{background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:8px;margin-top:16px;font-size:13px;}.icon{width:56px;height:56px;margin:0 auto 16px;color:#ef4444;}</style></head><body><div class="box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="9" y1="12" x2="15" y2="12"/></svg><h1>该项目已被禁止访问</h1><p>此项目存在违规内容，已被平台封禁。</p><div class="reason">封禁原因：' . htmlspecialchars($reason) . '</div></div></body></html>';
+    file_put_contents($projectDir . '/index.html', $banHtml);
+    $pdo->prepare("UPDATE projects SET banned = 1, ban_reason = ? WHERE id = ?")->execute([$reason, $projectId]);
+    return true;
+}
+
+function unbanProject($projectId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM projects WHERE id = ?");
+    $stmt->execute([$projectId]);
+    $project = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$project) return false;
+    $proId = $project['pro_id'];
+    $projectDir = getProjectDirPath($proId);
+    $backupDir = $projectDir ? dirname($projectDir) . "/.banned_$proId" : null;
+    if ($projectDir && is_dir($projectDir)) {
+        $it = new RecursiveDirectoryIterator($projectDir, RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($files as $file) { $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath()); }
+        rmdir($projectDir);
+    }
+    if ($backupDir && is_dir($backupDir)) {
+        rename($backupDir, $projectDir);
+    }
+    $pdo->prepare("UPDATE projects SET banned = 0, ban_reason = NULL WHERE id = ?")->execute([$projectId]);
+    return true;
+}
+
+// === 访客项目封禁 ===
+function banGuestProject($proId, $reason) {
+    $pdo = getDB();
+    $pdo->prepare("UPDATE guest_projects SET banned = 1, ban_reason = ? WHERE pro_id = ?")->execute([$reason, $proId]);
+    return true;
+}
+function unbanGuestProject($proId) {
+    $pdo = getDB();
+    $pdo->prepare("UPDATE guest_projects SET banned = 0, ban_reason = NULL WHERE pro_id = ?")->execute([$proId]);
+    return true;
+}
+
+// ========== 用户封禁 ==========
+function banUser($userId, $reason) {
+    $pdo = getDB();
+    $pdo->prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?")->execute([$reason, $userId]);
+    // 同时封禁该用户所有项目
+    $pdo->prepare("UPDATE projects SET banned = 1, ban_reason = ? WHERE user_id = ?")->execute([$reason, $userId]);
+    return true;
+}
+function unbanUser($userId) {
+    $pdo = getDB();
+    $pdo->prepare("UPDATE users SET banned = 0, ban_reason = NULL WHERE id = ?")->execute([$userId]);
+    // 同时解封该用户所有项目
+    $pdo->prepare("UPDATE projects SET banned = 0, ban_reason = NULL WHERE user_id = ?")->execute([$userId]);
+    return true;
+}
+function isUserBanned($userId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT banned FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $r = $stmt->fetch(PDO::FETCH_ASSOC);
+    return !empty($r['banned']);
+}
+
+// ========== 申诉系统 ==========
+function getUserByUsername($username) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->execute([$username]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+function hasPendingAppeal($userId) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT id FROM user_appeals WHERE user_id = ? AND status = 0");
+    $stmt->execute([$userId]);
+    return $stmt->fetch() !== false;
+}
+function createAppeal($userId, $username, $email, $contact, $reason, $proofImage = null) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("INSERT INTO user_appeals (user_id, username, email, contact, reason, proof_image, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
+    $stmt->execute([$userId, $username, $email, $contact, $reason, $proofImage, time()]);
+    return $pdo->lastInsertId();
+}
+function getAllAppeals($status = null) {
+    $pdo = getDB();
+    if ($status !== null) {
+        $stmt = $pdo->prepare("SELECT * FROM user_appeals WHERE status = ? ORDER BY created_at DESC");
+        $stmt->execute([$status]);
+    } else {
+        $stmt = $pdo->query("SELECT * FROM user_appeals ORDER BY created_at DESC");
+    }
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+function getAppealById($id) {
+    $pdo = getDB();
+    $stmt = $pdo->prepare("SELECT * FROM user_appeals WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+function processAppeal($id, $status, $remark = '') {
+    $pdo = getDB();
+    $appeal = getAppealById($id);
+    if (!$appeal) return false;
+    $pdo->prepare("UPDATE user_appeals SET status = ?, admin_remark = ?, processed_at = ? WHERE id = ?")->execute([$status, $remark, time(), $id]);
+    // 如果通过（status=1），自动解封用户
+    if ($status == 1 && !empty($appeal['user_id'])) {
+        unbanUser($appeal['user_id']);
+    }
+    return true;
+}
+
+// ========== 后台路径自定义 ==========
+function getAdminPath() {
+    $config = getConfig();
+    return $config['admin_path'] ?? 'admin';
+}
+function setAdminPath($newPath) {
+    $pdo = getDB();
+    $newPath = preg_replace('/[^a-zA-Z0-9_-]/', '', $newPath);
+    if (empty($newPath)) $newPath = 'admin';
+    $pdo->prepare("UPDATE site_config SET value = ? WHERE key = 'admin_path'")->execute([$newPath]);
+    return $newPath;
+}
+
+
+
+
+
+
+
+
+

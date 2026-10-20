@@ -2,6 +2,7 @@
 session_start();
 if (!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; }
 require_once '../functions.php';
+requireAdminPermission('manage_templates');
 $config = getConfig();
 
 // 处理删除
@@ -167,3 +168,5 @@ document.getElementById('tplModal').addEventListener('click', function(e) {
 </script>
 </body>
 </html>
+
+

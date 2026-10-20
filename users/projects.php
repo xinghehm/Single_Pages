@@ -136,14 +136,23 @@ function projectCoverGradient($name) {
                     </div>
                     <div class="body">
                         <div class="title" title="<?= htmlspecialchars($pro['name']) ?>"><?= htmlspecialchars($pro['name']) ?></div>
+                    <?php if (!empty($pro['banned'])): ?>
+                    <div style="margin:6px 0;padding:6px 10px;background:#fef2f2;border-radius:6px;font-size:11px;color:#991b1b;line-height:1.4;">
+                        <i class="ri-ban-line"></i> 已封禁：<?= htmlspecialchars(mb_substr($pro['ban_reason'] ?? '违反平台规定', 0, 20)) ?>...
+                    </div>
+                    <?php endif; ?>
                         <div class="meta">
                             <span><i class="ri-calendar-line"></i> <?= date('Y-m-d', $pro['created_at']) ?></span>
                             <span><i class="ri-eye-line"></i> <?= $totalVisits ?></span>
                         </div>
                         <div class="actions">
+                            <?php if (!empty($pro['banned'])): ?>
+                            <a href="../project_appeal.php?pro_id=<?= urlencode($pro['pro_id']) ?>" class="act-manage" style="background:#f59e0b;color:#fff;"><i class="ri-inbox-line"></i> 申诉</a>
+                            <?php else: ?>
                             <a href="project_detail.php?pro=<?= $pro['pro_id'] ?>" class="act-manage"><i class="ri-settings-3-line"></i> 管理</a>
                             <a href="projects.php?clone=<?= $pro['pro_id'] ?>" onclick="return confirm('克隆此项目？')" class="act-clone"><i class="ri-file-copy-line"></i> 克隆</a>
                             <button class="act-delete" onclick="openDeleteModal('<?= $pro['pro_id'] ?>', '<?= htmlspecialchars($pro['name'], ENT_QUOTES) ?>')"><i class="ri-delete-bin-line"></i> 删除</button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -292,6 +301,7 @@ document.getElementById('deleteModal').addEventListener('click', function(e) { i
 </script>
 </body>
 </html>
+
 
 
 

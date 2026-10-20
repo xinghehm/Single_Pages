@@ -184,8 +184,9 @@ function openRefundModal(orderId, product, amount){
     document.getElementById('rfAccount').value = '';
     document.getElementById('rfRealName').value = '';
     document.getElementById('refundModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
-function closeRefundModal(){ document.getElementById('refundModal').style.display = 'none'; }
+function closeRefundModal(){ document.getElementById('refundModal').style.display = 'none'; document.body.style.overflow = ''; }
 function selectMethod(m, el){
     document.querySelectorAll('#refundModal label[onclick^="selectMethod"]').forEach(l=>{l.style.borderColor='#e5e7eb';l.style.background='#fff';});
     el.style.borderColor = '#2563eb'; el.style.background = '#eff6ff';
@@ -198,4 +199,5 @@ function toggleSidebar(){
 </script>
 </body>
 </html>
+
 

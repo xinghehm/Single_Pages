@@ -7,6 +7,22 @@ if (!isProjectOwner($proId, $user['id'])) die('无权访问');
 $project = getProjectByProId($proId);
 $files = getProjectFiles($proId);
 $config = getConfig();
+
+// 处理自定义后缀
+$slugMsg = ''; $slugMsgType = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_slug') {
+    $slug = trim($_POST['custom_slug'] ?? '');
+    if ($slug && !preg_match('/^[a-zA-Z0-9_-]{2,30}$/', $slug)) {
+        $slugMsg = '后缀只能包含字母、数字、下划线、短横线，长度2-30位'; $slugMsgType = 'error';
+    } elseif ($slug && !checkSlugAvailable($slug, $project['id'])) {
+        $slugMsg = '该后缀已被占用'; $slugMsgType = 'error';
+    } else {
+        setProjectSlug($project['id'], $slug);
+        $project = getProjectByProId($proId);
+        $slugMsg = $slug ? '自定义后缀已保存' : '已恢复默认访问链接'; $slugMsgType = 'success';
+    }
+}
+
 $visitStats = getProjectVisitStats($proId, 14);
 $totalVisits = getProjectTotalVisits($proId);
 $todayVisits = 0;
@@ -55,6 +71,42 @@ foreach ($visitStats as $v) { if ($v['visit_date'] === date('Y-m-d')) $todayVisi
             <a href="projects.php?clone=<?= $proId ?>" class="btn-secondary"><i class="ri-file-copy-line"></i> 克隆项目</a>
             <a href="file_new.php?pro=<?= $proId ?>" class="btn-primary"><i class="ri-add-line"></i> 新建文件</a>
         </div>
+    </div>
+
+    <!-- 项目信息卡片 -->
+    <div class="card" style="margin-bottom:20px;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;"><i class="ri-link"></i> 访问设置</h3>
+            <?php if ($slugMsg): ?><span style="font-size:13px;color:<?= $slugMsgType=='success'?'#16a34a':'#dc2626'; ?>;"><?= htmlspecialchars($slugMsg) ?></span><?php endif; ?>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">默认访问链接</label>
+                <div style="display:flex;align-items:center;gap:8px;background:#f9fafb;padding:10px 14px;border-radius:10px;border:1.5px solid #e5e7eb;">
+                    <span style="color:#6b7280;font-size:13px;white-space:nowrap;"><?= htmlspecialchars($config['site_name'] ?? '') ?>/</span>
+                    <code style="font-size:13px;color:#2563eb;font-weight:600;"><?= htmlspecialchars($proId) ?></code>
+                    <a href="/<?= $proId ?>" target="_blank" style="margin-left:auto;color:#2563eb;font-size:13px;text-decoration:none;"><i class="ri-external-link-line"></i></a>
+                </div>
+            </div>
+            <div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="save_slug">
+                    <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">自定义后缀（可选）</label>
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;display:flex;align-items:center;background:#f9fafb;padding:0 14px;border-radius:10px;border:1.5px solid #e5e7eb;">
+                            <span style="color:#6b7280;font-size:13px;white-space:nowrap;"><?= htmlspecialchars($config['site_name'] ?? '') ?>/</span>
+                            <input type="text" name="custom_slug" value="<?= htmlspecialchars($project['custom_slug'] ?? '') ?>" placeholder="留空使用默认" style="flex:1;border:none;background:transparent;padding:10px 0;font-size:13px;outline:none;color:#2563eb;font-weight:600;" maxlength="30">
+                        </div>
+                        <button type="submit" class="btn-primary btn-sm" style="white-space:nowrap;"><i class="ri-save-line"></i> 保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php if (!empty($project['custom_slug'])): ?>
+        <div style="margin-top:12px;padding:10px 14px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1e40af;">
+            <i class="ri-checkbox-circle-line"></i> 自定义链接已生效：<strong><?= htmlspecialchars($config['site_name'] ?? '') ?>/<?= htmlspecialchars($project['custom_slug']) ?></strong>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- 访问统计 -->
@@ -136,6 +188,7 @@ function toggleSidebar(){
 </script>
 </body>
 </html>
+
 
 
 

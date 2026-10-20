@@ -66,6 +66,16 @@ if ($ext === 'zip') {
     }
 } else {
     if (!is_dir($destDir)) mkdir($destDir, 0755, true);
+    $allowedExt = ['html', 'htm', 'zip'];
+    $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($fileExt, $allowedExt)) {
+        echo json_encode(['success' => false, 'msg' => '只支持上传 HTML 或 ZIP 文件']);
+        exit;
+    }
+    if ($file['size'] > 50 * 1024 * 1024) {
+        echo json_encode(['success' => false, 'msg' => '文件大小不能超过50MB']);
+        exit;
+    }
     move_uploaded_file($file['tmp_name'], $destDir . '/index.html');
 }
 

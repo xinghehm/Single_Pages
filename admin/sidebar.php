@@ -6,6 +6,7 @@ $menuItems = [
     ['users.php', 'ri-user-line', '用户管理'],
     ['orders.php', 'ri-file-list-3-line', '订单管理'],
     ['refunds.php', 'ri-refund-line', '退款管理'],
+    ['appeals.php', 'ri-inbox-line', '申诉管理'],
     ['groups.php', 'ri-group-line', '用户组管理'],
     ['projects.php', 'ri-folder-line', '项目管理'],
     ['templates.php', 'ri-apps-line', '模板管理'],
@@ -22,7 +23,7 @@ $menuItems = [
 <aside class="sidebar">
     <div>
         <div class="brand">
-            <div class="logo"><i class="ri-cloud-line"></i></div>
+            <?php if (!empty($config['site_logo'])): ?><div class="logo" style="background:transparent;"><img src="<?= htmlspecialchars($config['site_logo']) ?>" style="width:36px;height:36px;border-radius:8px;object-fit:cover;"></div><?php else: ?><div class="logo"><i class="ri-cloud-line"></i></div><?php endif; ?>
             <div>
                 <div class="name"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div>
                 <div class="sub">管理后台</div>
@@ -38,6 +39,8 @@ $menuItems = [
         <a href="logout.php"><i class="ri-logout-box-line"></i> 退出登录</a>
     </div>
 </aside>
+
+
 
 
 

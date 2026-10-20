@@ -71,6 +71,14 @@ a{text-decoration:none;color:inherit}
 .card-title{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;margin-bottom:16px}
 .card-title i{color:#3b82f6;font-size:20px}
 .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(min-width:768px){
+  .container{max-width:960px;padding:24px}
+  .stats-grid{grid-template-columns:repeat(4,1fr);gap:16px}
+  .quick-grid{grid-template-columns:repeat(5,1fr);gap:16px}
+}
+@media(min-width:1200px){
+  .container{max-width:1100px}
+}
 .quick-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border-radius:12px;transition:all .15s;cursor:pointer}
 .quick-item:active{background:#f3f4f6;transform:scale(.95)}
 .quick-icon{width:44px;height:44px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#3b82f6}
@@ -213,6 +221,7 @@ document.querySelectorAll('.sidebar nav a').forEach(function(a){
 </script>
 </body>
 </html>
+
 
 
 

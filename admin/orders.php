@@ -2,6 +2,7 @@
 session_start();
 if (!isset($_SESSION['admin_id'])) { header('Location: login.php'); exit; }
 require_once '../functions.php';
+requireAdminPermission('manage_orders');
 $config = getConfig();
 
 // 处理订单状态变更
@@ -121,3 +122,5 @@ function toggleSidebar(){
 </script>
 </body>
 </html>
+
+

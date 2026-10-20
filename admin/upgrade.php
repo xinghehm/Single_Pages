@@ -49,9 +49,12 @@ if (is_dir(UPGRADE_BACKUP_DIR)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在线升级 — 管理后台</title>
-    <link rel="stylesheet" href="../style.css?v=245">
+    <link href="/assets/remixicon/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css?v=247">
 </head>
 <body class="has-sidebar">
+<div class="mobile-topbar"><button class="hamburger-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="mobile-logo"><div class="logo-icon"><i class="ri-refresh-line"></i></div><span>在线升级</span></div></div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 <?php include 'sidebar.php'; ?>
 
 <main class="flex-1">
@@ -172,5 +175,12 @@ if (is_dir(UPGRADE_BACKUP_DIR)) {
         </p>
     </div>
 </main>
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
 </body>
 </html>
+

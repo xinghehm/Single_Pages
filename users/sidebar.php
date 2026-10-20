@@ -14,7 +14,7 @@ $userMenuItems = [
 ];
 ?>
 <aside class="sidebar">
-    <div class="brand"><div class="logo"><i class="ri-cloud-line"></i></div><div><div class="name"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div><div class="sub">Pages</div></div></div>
+    <div class="brand"><?php if (!empty($config['site_logo'])): ?><div class="logo" style="background:transparent;"><img src="<?= htmlspecialchars($config['site_logo']) ?>" style="width:36px;height:36px;border-radius:8px;object-fit:cover;"></div><?php else: ?><div class="logo"><i class="ri-cloud-line"></i></div><?php endif; ?><div><div class="name"><?= htmlspecialchars($config['site_name'] ?? '单页工坊') ?></div><div class="sub">Pages</div></div></div>
     <nav>
 <?php foreach ($userMenuItems as $item): ?>
         <a href="<?= $item[0] ?>"<?= $currentUserPage === $item[0] ? ' class="active"' : '' ?>><i class="<?= $item[1] ?>"></i> <?= $item[2] ?></a>
@@ -22,3 +22,4 @@ $userMenuItems = [
     </nav>
     <div class="sidebar-footer"><a href="../logout.php" style="color:#dc2626;"><i class="ri-logout-box-line"></i> 退出登录</a></div>
 </aside>
+

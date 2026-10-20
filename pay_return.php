@@ -11,9 +11,15 @@ if (verifyYiPaySign($_GET)) {
     if ($tradeStatus === 'TRADE_SUCCESS') {
         $outTradeNo = $_GET['out_trade_no'] ?? '';
         $tradeNo = $_GET['trade_no'] ?? '';
-        processPaidOrder($outTradeNo, $tradeNo);
+        $orderInfo = getOrderByOutTradeNo($outTradeNo);
+        if ($orderInfo && ($orderInfo['order_type'] ?? 'group') == 'balance') {
+            processBalanceRecharge($outTradeNo, $tradeNo);
+            $message = '支付成功！余额已到账';
+        } else {
+            processPaidOrder($outTradeNo, $tradeNo);
+            $message = '支付成功！用户组已开通';
+        }
         $success = true;
-        $message = '支付成功！用户组已开通';
     } else {
         $message = '支付未完成';
     }
